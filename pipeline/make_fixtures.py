@@ -94,13 +94,13 @@ stats = {"flooded_km2": total, "flooded_vegetation_km2": 0, "aoi_km2": round((E 
 (OUT / "stats.json").write_text(json.dumps(stats, indent=1))
 
 cells, step = [], 0.1
-for i in range(5):
-    for j in range(5):
+for i in range(10):  # grid is wider than the image AOI: ground signals come from the whole NISAR frame
+    for j in range(9):
         w, s = round(W + i * step, 2), round(S + j * step, 2)
         cx, cy = w + step / 2, s + step / 2
         d = min(math.hypot(cx - e[0], cy - e[1]) for e in FLOODS)
         cells.append({"bbox": [w, s, round(w + step, 2), round(s + step, 2)],
-                      "wetness": round(max(0.2, min(0.98, 0.95 - 1.8 * d + 0.15 * (cy > 13.05))), 2),
+                      "wetness": 0.86 if cy > 13.4 else round(max(0.2, min(0.98, 0.95 - 1.8 * d)), 2),
                       "water_ratio": round(max(1.0, 3.2 - 22 * d), 1)})
 (OUT / "signals.json").write_text(json.dumps(
     {"as_of": meta["post"]["acquired"], "wetness_source": "NISAR HV backscatter wetness proxy",
@@ -111,12 +111,12 @@ for i in range(5):
 
 config = {"wetness_percentile_high": 0.8, "water_ratio_high": 1.5, "rain_48h_mm_high": 50,
           "sensor_rise_high": 150, "sensor_rise_window_s": 60, "sensor_stale_s": 30, "near_km": 5, "far_km": 25,
-          "device_location": {"lat": 13.15, "lon": 104.25, "label": "Demo sensor site"},
+          "device_location": {"lat": 13.50, "lon": 104.65, "label": "Demo sensor site"},
           "sim": {"rain_48h_mm": 85},
           "firebase_url": "",
-          "demo_pins": [{"label": "Far from flood", "lat": 13.15, "lon": 104.25},
-                        {"label": "Near flood", "lat": 13.02, "lon": 104.20},
-                        {"label": "Inside flood", "lat": 12.93, "lon": 103.98}]}
+          "demo_pins": [{"label": "Far from flood", "lat": 13.50, "lon": 104.65},
+                        {"label": "Near flood", "lat": 13.08, "lon": 104.22},
+                        {"label": "Inside flood", "lat": 12.99, "lon": 104.12}]}
 cfg_path = OUT / "config.json"
 if not cfg_path.exists():  # never clobber tuned thresholds
     cfg_path.write_text(json.dumps(config, indent=1))

@@ -6,15 +6,35 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - Repo scaffold, `.gitignore`, `.env.example`, CREDITS.md
 - `pipeline/01_discover.py` (EONET + CMR pair search), `pipeline/02_inspect.py` (HDF5 structure dump).
   Written without network access to NASA hosts: NOT yet run against real data.
+- `web/src/shared/tier.ts` tier engine + 19 passing tests (`npm test` in `web/`)
+- `pipeline/make_fixtures.py`: synthetic placeholder data in `web/public/data/` (app shows a PLACEHOLDER banner)
+- Web app v1 (`web/`): swipe map, flood overlay + opacity, legend, tier card with 5 signals and freshness
+  badges, demo pins, simulate storm / sensor toggles, bell + banner + browser notifications, AI briefing
+  card with audience switch, stats, world feed, How it works, Data & credits. Builds clean; tier walk
+  verified in headless Chromium on fixtures (GREEN -> YELLOW -> RED, ORANGE near flood, RED inside).
 
-## In progress
-- Frontend scaffold with fixture data (`web/`)
+## Not verified yet
+- Basemap tiles (CARTO) and the NASA GIBS comparison layer: hosts are blocked in the cloud session,
+  so they have only been coded, never seen rendering. Check on the laptop with `npm run dev`.
+- Live Open-Meteo call and Firebase sensor polling (same reason).
+
+## Blocked
+- `git push` is refused (403): the Claude GitHub App has no write access to the repo. Commits exist
+  only in the cloud session; snapshots are handed over as zip files until access is fixed.
 
 ## Next
-1. User runs `01_discover.py` (+ `--regions`) and pastes the output; lock the event (Checkpoint A, Sat 1:30 PM PST)
-2. User runs `02_inspect.py` on one granule and pastes the output
+1. User: fix GitHub write access; run `01_discover.py --regions`, paste output; lock event (Checkpoint A)
+2. User: run `02_inspect.py` on one granule, paste output
 3. `03_fetch.py`, `04_detect.py`, `05_export.py` fitted to the real HDF5 layout
-4. Tier engine + UI, briefings, firmware (see plan order)
+4. `web/api/tier.ts` (Vercel function for the ESP32) + `vercel.json`
+5. `06_briefings.py`, then firmware
+
+## Design notes
+- Ground signals 1-2 are a grid of cells in `signals.json` (per location, not one value per AOI), and the
+  grid may cover more of the NISAR frame than the detailed flood map, so a pin can be >25 km from flooding
+  and still have ground data. Needed for a GREEN -> YELLOW demo step.
+- Flooding within 25 km (not inside) is ORANGE, including the 0-5 km band.
+- YELLOW = exactly one ground sign + rain; any other pair is ORANGE; three or more is RED.
 
 ## Open questions for the user
 - None yet
