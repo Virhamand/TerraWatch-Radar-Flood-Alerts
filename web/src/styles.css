@@ -107,7 +107,7 @@ header p { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; }
 [aria-checked='true'] { border-color: var(--warn); }
 
 nav { display: flex; gap: 2px; margin: 22px 0 0; border-bottom: 1px solid var(--rule); overflow-x: auto; scrollbar-width: none; }
-nav button { border: 0; background: none; border-radius: 0; padding: 8px 10px; font-size: 13px; color: var(--ink-2); white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+nav button { border: 0; background: none; border-radius: 0; padding: 8px 8px; font-size: 13px; color: var(--ink-2); white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 nav button:hover { color: var(--ink); }
 nav button[aria-selected='true'] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
 .panel { padding: 14px 0 6px; max-width: 62ch; }
