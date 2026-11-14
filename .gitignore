@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.netrc
+firmware/**/secrets.h
+pipeline/data/
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+web/dist/
+.vercel/
+.DS_Store
+*.h5
+*.tif
+!web/public/**/*.tif

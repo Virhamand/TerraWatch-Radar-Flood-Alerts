@@ -1,0 +1,12 @@
+earthaccess>=0.11
+h5py
+numpy
+rasterio
+scikit-image
+scipy
+shapely
+pyproj
+requests
+python-dotenv
+openai
+Pillow
