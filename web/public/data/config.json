@@ -1,0 +1,36 @@
+{
+ "wetness_percentile_high": 0.8,
+ "water_ratio_high": 1.5,
+ "rain_48h_mm_high": 50,
+ "sensor_rise_high": 150,
+ "sensor_rise_window_s": 60,
+ "sensor_stale_s": 30,
+ "near_km": 5,
+ "far_km": 25,
+ "device_location": {
+  "lat": 13.15,
+  "lon": 104.25,
+  "label": "Demo sensor site"
+ },
+ "sim": {
+  "rain_48h_mm": 85
+ },
+ "firebase_url": "",
+ "demo_pins": [
+  {
+   "label": "Far from flood",
+   "lat": 13.15,
+   "lon": 104.25
+  },
+  {
+   "label": "Near flood",
+   "lat": 13.02,
+   "lon": 104.2
+  },
+  {
+   "label": "Inside flood",
+   "lat": 12.93,
+   "lon": 103.98
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "FIXTURE",
+  "title": "Synthetic placeholder flood (not real data)",
+  "category": "floods",
+  "date": "2026-09-02",
+  "lat": 12.95,
+  "lon": 104.05,
+  "source": "TerraWatch",
+  "link": "",
+  "analysed": true
+ },
+ {
+  "id": "FIXTURE_2",
+  "title": "Placeholder flood event A",
+  "category": "floods",
+  "date": "2026-10-11",
+  "lat": 24.8,
+  "lon": 91.3,
+  "source": "EONET",
+  "link": "https://eonet.gsfc.nasa.gov/",
+  "analysed": false
+ },
+ {
+  "id": "FIXTURE_3",
+  "title": "Placeholder severe storm B",
+  "category": "severeStorms",
+  "date": "2026-10-29",
+  "lat": 18.2,
+  "lon": -66.4,
+  "source": "EONET",
+  "link": "https://eonet.gsfc.nasa.gov/",
+  "analysed": false
+ }
+]
