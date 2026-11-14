@@ -18,12 +18,8 @@ Resume point for any new session. Full plan: see "Plan summary" below.
   so they have only been coded, never seen rendering. Check on the laptop with `npm run dev`.
 - Live Open-Meteo call and Firebase sensor polling (same reason).
 
-## Blocked
-- `git push` is refused (403): the Claude GitHub App has no write access to the repo. Commits exist
-  only in the cloud session; snapshots are handed over as zip files until access is fixed.
-
 ## Next
-1. User: fix GitHub write access; run `01_discover.py --regions`, paste output; lock event (Checkpoint A)
+1. User: `git pull`, run `01_discover.py --regions`, paste output; lock event (Checkpoint A)
 2. User: run `02_inspect.py` on one granule, paste output
 3. `03_fetch.py`, `04_detect.py`, `05_export.py` fitted to the real HDF5 layout
 4. `web/api/tier.ts` (Vercel function for the ESP32) + `vercel.json`
