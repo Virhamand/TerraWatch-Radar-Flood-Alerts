@@ -12,6 +12,8 @@ Resume point for any new session. Full plan: see "Plan summary" below.
   badges, demo pins, simulate storm / sensor toggles, bell + banner + browser notifications, AI briefing
   card with audience switch, stats, world feed, How it works, Data & credits. Builds clean; tier walk
   verified in headless Chromium on fixtures (GREEN -> YELLOW -> RED, ORANGE near flood, RED inside).
+- `web/server/tier.ts` -> bundled to `web/api/tier.js` (`npm run build:api`): the endpoint the ESP32 polls.
+  Called locally against the built site: GREEN / ORANGE / RED for the three demo pins. Not yet run on Vercel.
 
 ## Not verified yet
 - Basemap tiles (CARTO) and the NASA GIBS comparison layer: hosts are blocked in the cloud session,
@@ -22,7 +24,7 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 1. User: `git pull`, run `01_discover.py --regions`, paste output; lock event (Checkpoint A)
 2. User: run `02_inspect.py` on one granule, paste output
 3. `03_fetch.py`, `04_detect.py`, `05_export.py` fitted to the real HDF5 layout
-4. `web/api/tier.ts` (Vercel function for the ESP32) + `vercel.json`
+4. Deploy to Vercel (project root directory = `web`), then check `/api/tier` on the public URL
 5. `06_briefings.py`, then firmware
 
 ## Design notes
