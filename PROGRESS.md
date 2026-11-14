@@ -31,7 +31,6 @@ Resume point for any new session. Full plan: see "Plan summary" below.
   If the browser blocks it, proxy it through the Vercel function.
 
 ## Next
-1. User: paste full `01_discover.py --regions` output; choose 2-4 regions
 2. User: run `02_inspect.py <granule>`, paste output
 3. Write `03_fetch.py` for the real HDF5 layout (the only missing pipeline step)
 4. User: per region run 03 -> 04 -> 05 -> 06; send screenshots for threshold tuning
@@ -43,6 +42,12 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - YELLOW = exactly one ground sign + rain; any other pair is ORANGE; three or more is RED.
 - In a ~40 km region every pin is within 25 km of flooding, so the demo's GREEN -> YELLOW step needs either a
   larger AOI or a hand-placed far pin; decide once real data exists.
+
+## Regions chosen (2026-11-14, from the user's shortlist: 73 event pairs, 23 of them floods)
+- tonle_sap (seasonal, guaranteed large change; pre 2026-06-19, post 2026-10-17, track 083A frame 008) - do first
+- costa_rica EONET_20981 (post image same day as event), paraguay EONET_20898 (+2.4 d), slovakia EONET_20879 (+2.2 d)
+- EONET points are approximate; whether flooding is visible inside each AOI is unknown until processed.
+- Granule sizes came back as 0 GB (size parsing bug in 01_discover, cosmetic).
 
 ## Open questions for the user
 - None yet

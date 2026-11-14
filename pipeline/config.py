@@ -43,15 +43,40 @@ LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
 # Working rasters go to pipeline/data/<id>/, exports to web/public/data/<id>/.
 # ---------------------------------------------------------------------------------------------
 REGIONS = {
-    # "sylhet": {
-    #     "title": "Sylhet monsoon flooding, Bangladesh",   # shown in panels
-    #     "short": "Sylhet",                                # shown on the region switcher
-    #     "event": {"id": "EONET_1234", "title": "Flooding in Bangladesh", "country": "Bangladesh",
-    #               "date": "2026-08-30", "source_url": "https://eonet.gsfc.nasa.gov/..."},
-    #     "aoi_bbox": [91.0, 24.6, 91.6, 25.1],             # west, south, east, north; ~40-80 km across
-    #     "pre_granule": "NISAR_L2_PR_GCOV_...",            # granule names from the shortlist
-    #     "post_granule": "NISAR_L2_PR_GCOV_...",
-    # },
+    # Chosen from the 2026-11-14 discovery run (pipeline/data/shortlist.json). All pairs are the same
+    # track/frame, mode and polarization (DHDH = HH + HV), from NISAR_L2_GCOV_PROVISIONAL_V1.
+    "tonle_sap": {
+        "title": "Tonle Sap seasonal flood, Cambodia", "short": "Tonle Sap",
+        "event": {"id": "tonle_sap_2026", "title": "Tonle Sap monsoon flood pulse", "country": "Cambodia",
+                  "date": "2026-10-17", "source_url": ""},   # seasonal inundation, not an EONET event
+        "aoi_bbox": [103.75, 12.70, 104.35, 13.20],
+        "pre_granule": "NISAR_L2_PR_GCOV_023_083_A_008_2005_DHDH_M_20260619T223637_20260619T223711_P05023_N_F_J_001",
+        "post_granule": "NISAR_L2_PR_GCOV_033_083_A_008_2005_DHDH_M_20261017T223633_20261017T223708_P05023_N_F_J_001",
+    },
+    "costa_rica": {
+        "title": "Flood in Costa Rica (EONET)", "short": "Costa Rica",
+        "event": {"id": "EONET_20981", "title": "Flood in Costa Rica 1104003", "country": "Costa Rica",
+                  "date": "2026-07-01", "source_url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20981"},
+        "aoi_bbox": [-83.80, 9.85, -83.20, 10.35],
+        "pre_granule": "NISAR_L2_PR_GCOV_023_069_D_083_4005_DHDH_A_20260619T000051_20260619T000126_P05023_N_F_J_001",
+        "post_granule": "NISAR_L2_PR_GCOV_024_069_D_083_4005_DHDH_A_20260701T000051_20260701T000125_P05023_N_F_J_001",
+    },
+    "paraguay": {
+        "title": "Flood in Paraguay (EONET)", "short": "Paraguay",
+        "event": {"id": "EONET_20898", "title": "Flood in Paraguay 1103999", "country": "Paraguay",
+                  "date": "2026-06-28", "source_url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20898"},
+        "aoi_bbox": [-57.45, -26.65, -56.85, -26.15],
+        "pre_granule": "NISAR_L2_PR_GCOV_023_060_A_164_2005_DHDH_A_20260618T094759_20260618T094834_P05023_N_F_J_001",
+        "post_granule": "NISAR_L2_PR_GCOV_024_060_A_164_2005_DHDH_A_20260630T094759_20260630T094833_P05023_N_F_J_001",
+    },
+    "slovakia": {
+        "title": "Flood in Slovakia (EONET)", "short": "Slovakia",
+        "event": {"id": "EONET_20879", "title": "Flood in Slovakia 1103998", "country": "Slovakia",
+                  "date": "2026-06-30", "source_url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20879"},
+        "aoi_bbox": [17.40, 48.05, 18.05, 48.50],
+        "pre_granule": "NISAR_L2_PR_GCOV_023_086_A_026_2005_DHDH_A_20260620T034623_20260620T034658_P05023_N_F_J_001",
+        "post_granule": "NISAR_L2_PR_GCOV_024_086_A_026_2005_DHDH_A_20260702T034622_20260702T034657_P05023_N_F_J_001",
+    },
 }
 
 
