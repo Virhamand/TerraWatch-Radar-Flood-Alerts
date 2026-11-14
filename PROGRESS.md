@@ -14,6 +14,9 @@ Resume point for any new session. Full plan: see "Plan summary" below.
   verified in headless Chromium on fixtures (GREEN -> YELLOW -> RED, ORANGE near flood, RED inside).
 - `web/server/tier.ts` -> bundled to `web/api/tier.js` (`npm run build:api`): the endpoint the ESP32 polls.
   Called locally against the built site: GREEN / ORANGE / RED for the three demo pins. Not yet run on Vercel.
+- `pipeline/06_briefings.py`: facts JSON per alert level, LLM call, automatic check that every number in a
+  briefing exists in the facts. Dry-run and checker tested; the LLM call itself is untested (host blocked).
+- Firmware `firmware/terrawatch_esp32/` + `firmware/serial_bridge.py`: written, NOT compiled or run.
 
 ## Not verified yet
 - Basemap tiles (CARTO) and the NASA GIBS comparison layer: hosts are blocked in the cloud session,
@@ -25,7 +28,7 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 2. User: run `02_inspect.py` on one granule, paste output
 3. `03_fetch.py`, `04_detect.py`, `05_export.py` fitted to the real HDF5 layout
 4. Deploy to Vercel (project root directory = `web`), then check `/api/tier` on the public URL
-5. `06_briefings.py`, then firmware
+5. User: compile and wire the firmware (pin table is at the top of the .ino); run `06_briefings.py` after the real export
 
 ## Design notes
 - Ground signals 1-2 are a grid of cells in `signals.json` (per location, not one value per AOI), and the
