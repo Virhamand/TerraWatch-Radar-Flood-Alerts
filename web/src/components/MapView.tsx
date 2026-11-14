@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import maplibregl, { type Map as MlMap, type StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { AppData, WorldEvent } from '../data'
+import Icon from './Icon'
 import { fmtDate } from '../data'
 
 const BASE: StyleSpecification = {
@@ -97,7 +98,7 @@ export default function MapView({ data, pin, onPin, tierColor, focus }: Props) {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: data.events.map((ev: WorldEvent) => ({ type: 'Feature', properties: { title: ev.title }, geometry: { type: 'Point', coordinates: [ev.lon, ev.lat] } })) },
       })
-      right.addLayer({ id: 'events', type: 'circle', source: 'events', paint: { 'circle-radius': 6, 'circle-color': '#2f7fd8', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } })
+      right.addLayer({ id: 'events', type: 'circle', source: 'events', paint: { 'circle-radius': 6, 'circle-color': '#2b6cb0', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } })
       setReady(true)
     })
     const click = (ev: maplibregl.MapMouseEvent) => onPinRef.current(ev.lngLat.lat, ev.lngLat.lng)
@@ -150,7 +151,9 @@ export default function MapView({ data, pin, onPin, tierColor, focus }: Props) {
         className="handle" style={{ left: `${split}%` }}
         onPointerDown={(e) => { (e.target as HTMLElement).setPointerCapture(e.pointerId) }}
         onPointerMove={(e) => { if (e.buttons) drag(e) }}
-      ><span>◀ ▶</span></div>
+      role="slider" aria-label="Before and after divider" aria-valuenow={Math.round(split)} aria-valuemin={0} aria-valuemax={100} tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'ArrowLeft') setSplit((v) => Math.max(2, v - 4)); if (e.key === 'ArrowRight') setSplit((v) => Math.min(98, v + 4)) }}
+      ><span><Icon name="drag" size={16} /></span></div>
 
       <div className="maptag tl">
         {compare
@@ -164,18 +167,18 @@ export default function MapView({ data, pin, onPin, tierColor, focus }: Props) {
           <span><i style={{ background: '#00aaff' }} /> Detected flooding</span>
           <span><i style={{ background: '#ffd166' }} /> Possible flooded vegetation</span>
           <span><i className="dash" /> Analysed area</span>
-          <span><i style={{ background: '#2f7fd8', borderRadius: '50%' }} /> Flood event (EONET)</span>
+          <span><i style={{ background: '#2b6cb0', borderRadius: '50%' }} /> Flood event (EONET)</span>
           <span><i className="grad" /> Radar backscatter: dark = smooth water</span>
         </div>
         <label>Flood overlay opacity
           <input type="range" min={0} max={1} step={0.05} value={opacity} onChange={(e) => setOpacity(+e.target.value)} />
         </label>
         {hasCompare && (
-          <button className={compare ? 'on' : ''} onClick={() => setCompare(!compare)}>
-            {compare ? 'Show NISAR "before"' : 'Compare with independent NASA layer'}
+          <button aria-pressed={compare} onClick={() => setCompare(!compare)}>
+            Compare with independent NASA layer
           </button>
         )}
-        <div className="src">{meta.collection} · {meta.provider}<br />Click the map to move the demo pin</div>
+        <div className="src">{meta.collection} · {meta.provider}<br />Click the map to move the pin.</div>
       </div>
     </div>
   )

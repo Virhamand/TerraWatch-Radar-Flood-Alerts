@@ -9,8 +9,8 @@ except ImportError:
     pass
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "pipeline" / "data"
-PUBLIC = ROOT / "web" / "public" / "data"
+DATA = Path(os.getenv("TERRAWATCH_DATA", ROOT / "pipeline" / "data"))
+PUBLIC = Path(os.getenv("TERRAWATCH_PUBLIC", ROOT / "web" / "public" / "data"))
 DATA.mkdir(parents=True, exist_ok=True)
 
 CMR = "https://cmr.earthdata.nasa.gov/search"
@@ -36,3 +36,25 @@ EARTHDATA_USERNAME = os.getenv("EARTHDATA_USERNAME", "")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
 LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
+
+# ---------------------------------------------------------------------------------------------
+# CHOSEN EVENT - fill in after 01_discover.py (Checkpoint A)
+# ---------------------------------------------------------------------------------------------
+EVENT = {"id": "", "title": "", "country": "", "date": "", "source_url": ""}
+AOI_BBOX = None            # [west, south, east, north] in degrees; keep to roughly 40-80 km across
+PRE_GRANULE = ""           # granule names from the shortlist
+POST_GRANULE = ""
+POL = "HH"                 # polarization used for change detection
+WETNESS_POL = "HV"         # used for the wetness proxy if present, else POL
+TARGET_RES_M = 30          # working resolution; coarser = faster and less speckle
+
+# Detection thresholds (all tunable; echoed into stats.json so the app can show them)
+MEDIAN_FILTER_PX = 5
+OTSU_RANGE_DB = (-8.0, -1.5)   # accept the Otsu threshold only inside this range...
+FALLBACK_THRESHOLD_DB = -3.0   # ...otherwise use this fixed drop
+WATER_CEILING_DB = -15.0       # post-event pixel must also be this dark to count as open water
+JRC_PERMANENT_PCT = 80         # JRC occurrence >= this is permanent water
+SLOPE_MAX_DEG = 5
+MIN_PATCH_HA = 1.0
+VEG_INCREASE_DB = 3.0          # HH increase flagged as possible flooded vegetation in tree cover
+SIGNAL_CELL_DEG = 0.05

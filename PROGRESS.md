@@ -17,6 +17,10 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - `pipeline/06_briefings.py`: facts JSON per alert level, LLM call, automatic check that every number in a
   briefing exists in the facts. Dry-run and checker tested; the LLM call itself is untested (host blocked).
 - Firmware `firmware/terrawatch_esp32/` + `firmware/serial_bridge.py`: written, NOT compiled or run.
+- UI restyle following the Impeccable design skill's published guidance (applied by hand; its detector could
+  not run here): light paper-toned panel beside the dark map, drawn SVG icons instead of emoji, real
+  switch/tab/pressed states, AA contrast on every tier colour, focus rings, reduced-motion support, phone layout.
+- `pipeline/04_detect.py`, `pipeline/05_export.py`: written, NOT yet run (test on synthetic rasters was interrupted).
 
 ## Not verified yet
 - Basemap tiles (CARTO) and the NASA GIBS comparison layer: hosts are blocked in the cloud session,

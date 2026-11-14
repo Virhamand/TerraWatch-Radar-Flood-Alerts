@@ -75,12 +75,12 @@ export interface TierResult {
   simulated: boolean
 }
 
-export const TIER_META: Record<Tier | 'BLUE', { code: number; title: string; color: string; emoji: string }> = {
-  GREEN: { code: 0, title: 'No current concern', color: '#2e9e5b', emoji: '🟢' },
-  YELLOW: { code: 1, title: 'Flood watch', color: '#e3b505', emoji: '🟡' },
-  ORANGE: { code: 2, title: 'Flood warning', color: '#f07f1f', emoji: '🟠' },
-  RED: { code: 3, title: 'Flood imminent or occurring', color: '#d7263d', emoji: '🔴' },
-  BLUE: { code: -1, title: 'Global report', color: '#2f7fd8', emoji: '🔵' },
+export const TIER_META: Record<Tier | 'BLUE', { code: number; title: string; color: string }> = {
+  GREEN: { code: 0, title: 'No current concern', color: '#2f7d4f' },
+  YELLOW: { code: 1, title: 'Flood watch', color: '#f2c230' },
+  ORANGE: { code: 2, title: 'Flood warning', color: '#e8741e' },
+  RED: { code: 3, title: 'Flood imminent or occurring', color: '#c62f2f' },
+  BLUE: { code: -1, title: 'Global report', color: '#2b6cb0' },
 }
 
 export function findCell(ground: GroundSignals | null, lat: number, lon: number): GroundCell | null {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Icon from './components/Icon'
 import MapView from './components/MapView'
 import { fetchRain48, fetchSensor, fmtDate, loadData, pushDemoFlags, type AppData, type Audience } from './data'
 import { floodDistanceKm } from './shared/geo'
@@ -87,7 +88,7 @@ function Main({ data }: { data: AppData }) {
   }, [])
   useEffect(() => {
     if (shouldNotify(prevTier.current, result.tier)) {
-      addNote({ tier: result.tier, title: `${TIER_META[result.tier].emoji} ${result.title}`, body: result.reason + (result.simulated ? ' (includes simulated signals)' : '') }, true)
+      addNote({ tier: result.tier, title: result.title, body: result.reason + (result.simulated ? ' (includes simulated signals)' : '') }, true)
     } else if (prevTier.current && TIER_META[result.tier].code < TIER_META[prevTier.current].code) {
       setBanner(null)
     }
@@ -109,8 +110,9 @@ function Main({ data }: { data: AppData }) {
             <h1>TerraWatch</h1>
             <p>Flood alerts from NASA–ISRO NISAR radar</p>
           </div>
-          <button className="bell" aria-label="Notifications" onClick={() => { setBellOpen(!bellOpen); setUnread(0) }}>
-            🔔{unread > 0 && <b>{unread}</b>}
+          <button className="bell" aria-label={`Notifications${unread ? `, ${unread} new` : ''}`} aria-expanded={bellOpen}
+            onClick={() => { setBellOpen(!bellOpen); setUnread(0) }}>
+            <Icon name="bell" size={18} />{unread > 0 && <b>{unread}</b>}
           </button>
         </header>
 
@@ -124,20 +126,21 @@ function Main({ data }: { data: AppData }) {
             </div>
             {notes.length === 0 && <p className="muted">Nothing yet. You are notified only when the alert level rises or a new event appears.</p>}
             {notes.map((n) => (
-              <div key={n.id} className="note" style={{ borderColor: TIER_META[n.tier].color }}>
-                <b>{n.title}</b><span>{n.body}</span><small>{new Date(n.at).toLocaleTimeString()}</small>
+              <div key={n.id} className="note">
+                <i className="chip" style={{ background: TIER_META[n.tier].color }} />
+                <div><b>{n.title}</b><span>{n.body}</span><small>{new Date(n.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</small></div>
               </div>
             ))}
           </div>
         )}
 
-        {meta.fixture && <div className="fixture">PLACEHOLDER DATA — synthetic fixture, not a real NISAR analysis yet</div>}
+        {meta.fixture && <div className="fixture" role="note"><b>Placeholder data.</b> This is a synthetic test scene, not a real NISAR analysis yet.</div>}
 
-        <section className="tier" style={{ borderColor: tm.color }}>
-          <div className="tierhead" style={{ background: tm.color }}>
+        <section className="tier" data-tier={result.tier} aria-live="polite">
+          <div className="tierhead">
             <span className="lvl">{result.tier}</span>
-            <span>{result.title}</span>
-            {result.simulated && <em>SIMULATED</em>}
+            <h2>{result.title}</h2>
+            {result.simulated && <em>Simulated</em>}
           </div>
           <p className="reason">{result.reason}</p>
           <ul className="signals">
@@ -145,50 +148,54 @@ function Main({ data }: { data: AppData }) {
               <li key={s.id} className={s.high ? 'high' : s.status !== 'ok' ? 'off' : ''}>
                 <span className="dot" />
                 <div>
-                  <b>{i + 1}. {s.label}</b>{s.simulated && <em>SIM</em>}
+                  <b>{s.label}{s.simulated && <em>Simulated</em>}</b>
                   <span>{s.value}</span>
                   <small>{s.source}{s.asOf ? ` · ${ageLabel(s.asOf, now)}` : ''}</small>
                 </div>
-                <strong>{s.high ? 'HIGH' : s.status === 'ok' ? 'normal' : s.status === 'offline' ? 'offline' : 'no data'}</strong>
+                <strong>{s.high ? 'High' : s.status === 'ok' ? 'Normal' : s.status === 'offline' ? 'Offline' : 'No data'}</strong>
               </li>
             ))}
           </ul>
           <div className="fresh">
-            <span title={meta.post.acquired}>🛰 Satellite: {satAge}</span>
-            <span>🌧 Forecast: {sim.storm ? 'simulated' : `${ageLabel(rain.asOf, now)}${rain.live ? '' : ' (saved)'}`}</span>
-            <span>📟 Sensor: {sensorSig.simulated ? 'simulated' : sensorSig.status === 'ok' ? ageLabel(sensorSig.asOf, now) : 'offline'}</span>
+            <span title={meta.post.acquired}><Icon name="satellite" size={14} />Satellite {satAge}</span>
+            <span><Icon name="rain" size={14} />Forecast {sim.storm ? 'simulated' : `${ageLabel(rain.asOf, now)}${rain.live ? '' : ' (saved)'}`}</span>
+            <span><Icon name="sensor" size={14} />Sensor {sensorSig.simulated ? 'simulated' : sensorSig.status === 'ok' ? ageLabel(sensorSig.asOf, now) : 'offline'}</span>
           </div>
         </section>
 
         <section className="demo">
-          <div className="row"><strong>Demo controls</strong><small>{pin.lat.toFixed(3)}, {pin.lon.toFixed(3)}</small></div>
+          <div className="row"><h3>Demo location</h3><small className="num">{pin.lat.toFixed(3)}, {pin.lon.toFixed(3)}</small></div>
           <div className="btns">
             {pins.map((p) => (
-              <button key={p.label} className={p.lat === pin.lat && p.lon === pin.lon ? 'on' : ''}
-                onClick={() => { setPin({ lat: p.lat, lon: p.lon }); setFocus({ lat: p.lat, lon: p.lon, zoom: 9.5, n: Date.now() }) }}>📍 {p.label}</button>
+              <button key={p.label} aria-pressed={p.lat === pin.lat && p.lon === pin.lon}
+                onClick={() => { setPin({ lat: p.lat, lon: p.lon }); setFocus({ lat: p.lat, lon: p.lon, zoom: 9.5, n: Date.now() }) }}><Icon name="pin" />{p.label}</button>
             ))}
             <button onClick={() => navigator.geolocation?.getCurrentPosition((g) => {
               setPin({ lat: g.coords.latitude, lon: g.coords.longitude })
               setFocus({ lat: g.coords.latitude, lon: g.coords.longitude, zoom: 8, n: Date.now() })
-            })}>◎ My location</button>
+            })}><Icon name="locate" />My location</button>
           </div>
-          <div className="btns">
-            <button className={sim.storm ? 'on warn' : ''} onClick={() => setSim({ ...sim, storm: !sim.storm })}>⛈ Simulate storm</button>
-            <button className={sim.sensor_rise ? 'on warn' : ''} onClick={() => setSim({ ...sim, sensor_rise: !sim.sensor_rise })}>🌊 Simulate sensor rise</button>
+          <div className="switches">
+            <button role="switch" aria-checked={sim.storm} onClick={() => setSim({ ...sim, storm: !sim.storm })}>
+              <Icon name="rain" /><span>Simulate storm</span><i className="track" />
+            </button>
+            <button role="switch" aria-checked={sim.sensor_rise} onClick={() => setSim({ ...sim, sensor_rise: !sim.sensor_rise })}>
+              <Icon name="wave" /><span>Simulate sensor rise</span><i className="track" />
+            </button>
           </div>
         </section>
 
-        <nav>
-          {([['briefing', 'AI briefing'], ['stats', 'Flood stats'], ['world', `Around the world${world.length ? ` (${world.length})` : ''}`], ['how', 'How it works'], ['credits', 'Data & credits']] as [Tab, string][]).map(([id, label]) => (
-            <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{label}</button>
+        <nav role="tablist" aria-label="Details">
+          {([['briefing', 'Briefing'], ['stats', 'Stats'], ['world', `World${world.length ? ` (${world.length})` : ''}`], ['how', 'How it works'], ['credits', 'Credits']] as [Tab, string][]).map(([id, label]) => (
+            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>
           ))}
         </nav>
 
         <section className="panel">
           {tab === 'briefing' && (
             <>
-              <div className="btns small">
-                {AUDIENCES.map((a) => <button key={a.id} className={aud === a.id ? 'on' : ''} onClick={() => setAud(a.id)}>{a.label}</button>)}
+              <div className="seg" role="group" aria-label="Briefing audience">
+                {AUDIENCES.map((a) => <button key={a.id} aria-pressed={aud === a.id} onClick={() => setAud(a.id)}>{a.label}</button>)}
               </div>
               <p className="brief">{briefing?.text ?? 'No briefing cached for this alert level.'}</p>
               <small className="muted">
@@ -200,7 +207,8 @@ function Main({ data }: { data: AppData }) {
           {tab === 'stats' && <StatsPanel data={data} />}
           {tab === 'world' && (
             <>
-              <p className="muted">🔵 Global report: floods and severe storms from NASA EONET, plus areas TerraWatch has analysed with NISAR.</p>
+              <h3>Around the world</h3>
+              <p className="muted"><i className="chip" style={{ background: TIER_META.BLUE.color }} />Global report: floods and severe storms from NASA EONET, plus areas TerraWatch has analysed with NISAR.</p>
               {world.map((e) => (
                 <button key={e.id} className="event" onClick={() => setFocus({ lat: e.lat, lon: e.lon, zoom: e.analysed ? 9 : 5, n: Date.now() })}>
                   <b>{e.title}</b>
@@ -212,14 +220,14 @@ function Main({ data }: { data: AppData }) {
           {tab === 'how' && <HowPanel />}
           {tab === 'credits' && <CreditsPanel data={data} />}
         </section>
-        <footer>TerraWatch supplements, but does not replace, official emergency alerts. Hackathon prototype · NASA Space Apps 2026</footer>
+        <footer>TerraWatch supplements, but does not replace, official emergency alerts.<br />Prototype built for NASA Space Apps 2026.</footer>
       </aside>
 
       <main>
         {banner && (
-          <div className="banner" style={{ background: TIER_META[banner.tier].color }}>
-            <b>{banner.title}</b> {banner.body}
-            <button onClick={() => setBanner(null)} aria-label="Dismiss">✕</button>
+          <div className="banner" data-tier={banner.tier} role="alert">
+            <span><b>{banner.title}.</b> {banner.body}</span>
+            <button onClick={() => setBanner(null)} aria-label="Dismiss alert"><Icon name="close" size={14} /></button>
           </div>
         )}
         <MapView data={data} pin={pin} onPin={(lat, lon) => setPin({ lat, lon })} tierColor={tm.color} focus={focus} />
@@ -266,11 +274,11 @@ function HowPanel() {
       <h3>How alerts work</h3>
       <p>TerraWatch combines radar data from the NASA–ISRO NISAR satellite, rainfall forecasts, and ground sensors to estimate flood risk where you are.</p>
       <ul className="tiers">
-        <li>🔴 <b>Red – Flood imminent or occurring:</b> satellite data shows flooding at your location, or at least three independent warning signs agree.</li>
-        <li>🟠 <b>Orange – Flood warning:</b> flooding has been detected nearby, or two warning signs agree.</li>
-        <li>🟡 <b>Yellow – Flood watch:</b> ground conditions are wet and significant rain is expected.</li>
-        <li>🟢 <b>Green – No current concern:</b> no warning signs detected in your area.</li>
-        <li>🔵 <b>Blue – Global report:</b> a major flood has been detected elsewhere in the world.</li>
+        <li><i className="chip" style={{ background: TIER_META.RED.color }} /><span><b>Red – Flood imminent or occurring:</b> satellite data shows flooding at your location, or at least three independent warning signs agree.</span></li>
+        <li><i className="chip" style={{ background: TIER_META.ORANGE.color }} /><span><b>Orange – Flood warning:</b> flooding has been detected nearby, or two warning signs agree.</span></li>
+        <li><i className="chip" style={{ background: TIER_META.YELLOW.color }} /><span><b>Yellow – Flood watch:</b> ground conditions are wet and significant rain is expected.</span></li>
+        <li><i className="chip" style={{ background: TIER_META.GREEN.color }} /><span><b>Green – No current concern:</b> no warning signs detected in your area.</span></li>
+        <li><i className="chip" style={{ background: TIER_META.BLUE.color }} /><span><b>Blue – Global report:</b> a major flood has been detected elsewhere in the world.</span></li>
       </ul>
       <p>Every alert shows which signals triggered it and how recent the data is. NISAR passes over each location about every 12 days, so TerraWatch adds forecasts and ground sensors between passes.</p>
       <p><b>TerraWatch supplements, but does not replace, official emergency alerts.</b></p>

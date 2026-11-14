@@ -1325,11 +1325,11 @@ function floodDistanceKm(fc, lat, lon, maxKm = 200) {
 
 // src/shared/tier.ts
 var TIER_META = {
-  GREEN: { code: 0, title: "No current concern", color: "#2e9e5b", emoji: "\u{1F7E2}" },
-  YELLOW: { code: 1, title: "Flood watch", color: "#e3b505", emoji: "\u{1F7E1}" },
-  ORANGE: { code: 2, title: "Flood warning", color: "#f07f1f", emoji: "\u{1F7E0}" },
-  RED: { code: 3, title: "Flood imminent or occurring", color: "#d7263d", emoji: "\u{1F534}" },
-  BLUE: { code: -1, title: "Global report", color: "#2f7fd8", emoji: "\u{1F535}" }
+  GREEN: { code: 0, title: "No current concern", color: "#2f7d4f" },
+  YELLOW: { code: 1, title: "Flood watch", color: "#f2c230" },
+  ORANGE: { code: 2, title: "Flood warning", color: "#e8741e" },
+  RED: { code: 3, title: "Flood imminent or occurring", color: "#c62f2f" },
+  BLUE: { code: -1, title: "Global report", color: "#2b6cb0" }
 };
 function findCell(ground, lat, lon) {
   if (!ground) return null;
