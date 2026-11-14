@@ -188,8 +188,20 @@ def main():
         except FileNotFoundError:
             pass
 
-    for ev in events:
-        grans = granules_at(ev["lat"], ev["lon"])
+    # CMR lookups run in parallel; progress is printed so a long run is visibly alive
+    from concurrent.futures import ThreadPoolExecutor
+    done = [0]
+
+    def lookup(ev):
+        g = granules_at(ev["lat"], ev["lon"])
+        done[0] += 1
+        if done[0] % 10 == 0 or done[0] == len(events):
+            print(f"  checked {done[0]}/{len(events)} points...", flush=True)
+        return g
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        all_grans = list(pool.map(lookup, events))
+    for ev, grans in zip(events, all_grans):
         p = best_pair(grans, ev["date"])
         if p:
             result["pairs"].append({"event": ev, **p})
@@ -212,6 +224,7 @@ def main():
             pts = pts + [{"id": "manual", "title": "Manual point", "lat": args.point[0], "lon": args.point[1]}]
         print("\n===== ACQUISITION TIME SERIES (pick an early + late date on one track/frame) =====")
         for reg in pts:
+            print(f"  looking up {reg['title']}...", flush=True)
             grans = granules_at(reg["lat"], reg["lon"])
             print(f"\n* {reg['title']} ({reg['lat']}, {reg['lon']}): {len(grans)} granules")
             series = []
