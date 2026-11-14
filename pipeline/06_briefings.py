@@ -5,9 +5,11 @@ forbidden from adding anything else. Every number in its answer is checked again
 briefing with an unknown number is regenerated, then flagged if it still fails.
 
 Usage:
-  python pipeline/06_briefings.py            # needs LLM_API_KEY in .env
-  python pipeline/06_briefings.py --dry-run  # print the facts and prompts, call nothing
-Writes web/public/data/briefings.json. READ EVERY BRIEFING before committing.
+  python pipeline/06_briefings.py --region <id>   # briefings for one analysed region
+  python pipeline/06_briefings.py --global        # briefings for places with no NISAR analysis yet
+  add --dry-run to print the facts and prompt without calling the LLM
+Needs LLM_API_KEY in .env. Writes web/public/data/<id>/briefings.json (or data/briefings.json for
+--global). READ EVERY BRIEFING before committing.
 """
 import argparse
 import json
@@ -38,8 +40,11 @@ Rules, all mandatory:
 - End with this exact sentence: TerraWatch supplements, but does not replace, official emergency alerts."""
 
 
-def load(name):
-    return json.loads((config.PUBLIC / name).read_text())
+OUT = config.PUBLIC  # set to the region folder in main()
+
+
+def load(name, root=False):
+    return json.loads(((config.PUBLIC if root else OUT) / name).read_text())
 
 
 def days_ago(iso):
@@ -47,7 +52,7 @@ def days_ago(iso):
 
 
 def build_facts():
-    meta, stats, cfg = load("meta.json"), load("stats.json"), load("config.json")
+    meta, stats, cfg = load("meta.json"), load("stats.json"), load("config.json", root=True)
     common = {
         "satellite": "NASA-ISRO NISAR, L-band radar",
         "event": meta["event"]["title"],
@@ -88,6 +93,33 @@ def build_facts():
     return {k: {**v, **common} for k, v in levels.items()}
 
 
+def build_global_facts():
+    """Facts for a location outside every analysed region: no flood map, forecast and sensor only."""
+    cfg = load("config.json", root=True)
+    regions = load("regions.json", root=True)
+    common = {
+        "satellite": "NASA-ISRO NISAR, L-band radar",
+        "nisar_flood_analysis_at_this_location": "none yet",
+        "what_the_alert_uses_here": ["48-hour rain forecast from Open-Meteo", "ground water-level sensor, if one is installed nearby"],
+        "satellite_revisit_days": 12,
+        "areas_terrawatch_has_analysed_elsewhere": [r["title"] for r in regions],
+        "limitations": [
+            "without a NISAR analysis, soil wetness and flood extent are unknown here",
+            "the app shows separately when NISAR last imaged this point",
+            "this is a 2-day prototype; combining NISAR with other satellites would extend coverage",
+        ],
+    }
+    levels = {
+        "GREEN": {"alert_level": "GREEN - No current concern", "why_this_level": "no warning signs, or only one, at the reader's location", "signals_high": []},
+        "YELLOW": {"alert_level": "YELLOW - Flood watch", "why_this_level": "ground conditions are wet and significant rain is expected", "signals_high": []},
+        "ORANGE": {"alert_level": "ORANGE - Flood warning", "why_this_level": "two warning signs agree",
+                   "signals_high": [f"rain forecast for the next 48 hours at or above {cfg['rain_48h_mm_high']} mm (Open-Meteo)", "ground sensor level rising quickly"]},
+        "RED": {"alert_level": "RED - Flood imminent or occurring", "why_this_level": "at least three independent warning signs agree", "signals_high": []},
+        "BLUE": {"alert_level": "BLUE - Global report", "why_this_level": "a major flood was detected elsewhere in the world, not near the reader", "signals_high": []},
+    }
+    return {k: {**v, **common} for k, v in levels.items()}
+
+
 def numbers(text):
     return {m.replace(",", "") for m in re.findall(r"\d[\d,]*\.?\d*", text)}
 
@@ -110,8 +142,17 @@ def check(text, facts):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--region", default=next(iter(config.REGIONS), None))
+    ap.add_argument("--global", dest="glob", action="store_true")
     args = ap.parse_args()
-    facts = build_facts()
+    global OUT
+    if args.glob:
+        OUT, facts = config.PUBLIC, build_global_facts()
+    else:
+        if not args.region or not (config.PUBLIC / args.region / "meta.json").exists():
+            sys.exit(f"No exported region {args.region!r}: run 05_export.py --region <id> first, or use --global")
+        OUT = config.PUBLIC / args.region
+        facts = build_facts()
     if args.dry_run:
         print(SYSTEM, "\n")
         print(json.dumps(facts["RED"], indent=1))
@@ -148,8 +189,8 @@ def main():
                                **({"problems": problems} if problems else {})}
             print(f"\n[{level} / {aud}] {'!! ' + str(problems) if problems else 'ok'}\n{text}")
             time.sleep(2.5)  # stay under free-tier rate limits
-    (config.PUBLIC / "briefings.json").write_text(json.dumps(out, indent=1))
-    print(f"\nWrote briefings.json. {flagged} briefing(s) flagged - read them all before committing.")
+    (OUT / "briefings.json").write_text(json.dumps(out, indent=1))
+    print(f"\nWrote {OUT / 'briefings.json'}. {flagged} briefing(s) flagged - read them all before committing.")
 
 
 if __name__ == "__main__":

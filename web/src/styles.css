@@ -92,6 +92,8 @@ header p { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; }
 .signals li.off .dot { border-style: dashed; }
 .signals li strong { font-size: 12px; font-weight: 600; color: var(--ink-3); }
 .signals li.high strong { color: #a52222; }
+.coverage { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-2); }
+.coverage b { color: var(--ink); }
 .fresh { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 10px 14px; background: var(--paper); border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--ink-2); }
 .fresh span { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
 
@@ -115,6 +117,8 @@ nav button[aria-selected='true'] { color: var(--ink); font-weight: 600; border-b
 .seg button { border: 0; border-radius: 0; padding: 5px 10px; font-size: 13px; background: none; border-left: 1px solid var(--rule); }
 .seg button:first-child { border-left: 0; }
 .seg button[aria-pressed='true'] { background: var(--accent); color: #fdfcf9; }
+.seg.regions { display: flex; margin-top: 8px; }
+.seg.regions button { flex: 1; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .brief { font-size: 15px; line-height: 1.6; margin: 12px 0 10px; }
 .big b { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; display: block; font-variant-numeric: tabular-nums; line-height: 1.15; }
 .big span { color: var(--ink-2); }

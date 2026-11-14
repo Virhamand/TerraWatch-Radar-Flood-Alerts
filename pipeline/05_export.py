@@ -1,4 +1,6 @@
-"""Export detection results to web/public/data/ for the frontend (schemas: see PROGRESS.md / plan).
+"""Export one region's detection results to web/public/data/<id>/ and refresh the shared index files.
+
+Usage: python pipeline/05_export.py --region <id>
 
 Reads pipeline/data/: pre_db.tif, post_db.tif, flood_mask.tif, detect.json, optional worldcover.tif,
 jrc_occurrence.tif, pre_/post_<WETNESS_POL>.tif, shortlist.json, fetch.json (granule info from 03).
@@ -6,6 +8,7 @@ Writes: pre.png, post.png, flood.png, flood.geojson, stats.json, signals.json, m
         events.json, forecast.json, and config.json (thresholds kept if the file already exists).
 """
 import json
+import shutil
 from datetime import datetime, timezone
 
 import numpy as np
@@ -20,8 +23,7 @@ from shapely.ops import unary_union
 
 import config
 
-D, OUT = config.DATA, config.PUBLIC
-OUT.mkdir(parents=True, exist_ok=True)
+D, OUT = config.DATA, config.PUBLIC  # replaced by the region's folders in main()
 GEOD = Geod(ellps="WGS84")
 MAX_PX = 1600
 WORLDCOVER = {10: "Tree cover", 20: "Shrubland", 30: "Grassland", 40: "Cropland", 50: "Built-up",
@@ -72,6 +74,10 @@ def km2_of(geom):
 
 
 def main():
+    global D, OUT
+    rid, rcfg, D, OUT = config.region_from_args(__doc__)
+    OUT.mkdir(parents=True, exist_ok=True)
+    ROOT_OUT = config.PUBLIC
     det = load_json(D / "detect.json")
     fetch = load_json(D / "fetch.json", {})
     if det is None:
@@ -152,7 +158,7 @@ def main():
     land = (mask == 0) & ~perm  # wetness is measured on unflooded land only
     wpre4, _ = to_wgs84(np.where(land, wpre, np.nan).astype("float32"), wprof, Resampling.average, np.nan)
     wpost4, _ = to_wgs84(np.where(land, wpost, np.nan).astype("float32"), wprof, Resampling.average, np.nan)
-    perm4, _ = to_wgs84(perm.astype("uint8"), mprof, Resampling.nearest, 0)
+    perm4, _ = to_wgs84(perm.astype("uint8"), mprof, Resampling.nearest, 255)  # 255 = outside; a 0 no-data value corrupts the mask
     step = config.SIGNAL_CELL_DEG
     cells, pre_meds, post_meds = [], [], []
     lat_mid = (south + north) / 2
@@ -192,7 +198,7 @@ def main():
     # ---------- meta
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     old_meta = load_json(OUT / "meta.json", {})
-    meta = {"event": config.EVENT, "aoi_bbox": bbox, "pre": fetch.get("pre", {}), "post": fetch.get("post", {}),
+    meta = {"id": rid, "event": rcfg["event"], "aoi_bbox": bbox, "pre": fetch.get("pre", {}), "post": fetch.get("post", {}),
             "collection": fetch.get("collection", config.PREFERRED_COLLECTION), "provider": "ASF DAAC",
             "images": {"pre": "pre.png", "post": "post.png", "flood": "flood.png", "compare": None,
                        "bounds": [[bbox[0], bbox[3]], [bbox[2], bbox[3]], [bbox[2], bbox[1]], [bbox[0], bbox[1]]]},
@@ -201,17 +207,47 @@ def main():
     if not meta["compare"] and post_time:
         meta["compare"] = {"kind": "gibs", "layer": "MODIS_Terra_CorrectedReflectance_Bands721", "date": post_time[:10],
                            "label": "NASA GIBS: MODIS Terra false colour (bands 7-2-1; water appears dark blue/black)"}
+    # ---------- demo pins for this region
+    pins = old_meta.get("demo_pins") if old_meta.get("pins_locked") else None
+    if not pins and feats:
+        allflood = unary_union([g for _a, n, g in feats if n == "open_water_flood"][:200] or [feats[0][2]])
+        inside = feats[0][2].representative_point()
+        corners = [Point(bbox[0] + 0.02, bbox[1] + 0.02), Point(bbox[0] + 0.02, bbox[3] - 0.02),
+                   Point(bbox[2] - 0.02, bbox[1] + 0.02), Point(bbox[2] - 0.02, bbox[3] - 0.02)]
+        far = max(corners, key=lambda p: p.distance(allflood))
+        near = far  # walk from the far corner toward the flood until about 10 km away
+        for f in np.linspace(0, 1, 200):
+            p = Point(far.x + (inside.x - far.x) * f, far.y + (inside.y - far.y) * f)
+            if p.distance(allflood) * 111 <= 10:
+                near = p
+                break
+        pin = lambda label, p: {"label": label, "lat": round(p.y, 4), "lon": round(p.x, 4)}  # noqa: E731
+        pins = [pin("Far from flood", far), pin("Near flood", near), pin("Inside flood", inside)]
+        print(f"Demo pins set; the far corner is ~{far.distance(allflood) * 111:.0f} km from mapped flooding. "
+              f'Add "pins_locked": true to {rid}/meta.json to keep hand-edited pins.')
+    meta["demo_pins"] = pins or []
+    meta["pins_locked"] = bool(old_meta.get("pins_locked"))
     (OUT / "meta.json").write_text(json.dumps(meta, indent=1))
 
-    # ---------- events feed
-    events, seen = [], set()
+    # ---------- shared index: regions.json (fixture regions are dropped once a real one exists)
     cx, cy = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
-    if config.EVENT.get("id"):
-        events.append({"id": config.EVENT["id"], "title": config.EVENT["title"], "category": "floods",
-                       "date": config.EVENT["date"], "lat": round(cy, 3), "lon": round(cx, 3), "source": "TerraWatch",
-                       "link": config.EVENT.get("source_url", ""), "analysed": True})
-        seen.add(config.EVENT["id"].split("#")[0])
-    sl = load_json(D / "shortlist.json", {})
+    index = [r for r in load_json(ROOT_OUT / "regions.json", []) if r["id"] != rid]
+    for r in [r for r in index if r.get("fixture")]:
+        shutil.rmtree(ROOT_OUT / r["id"], ignore_errors=True)
+    index = [r for r in index if not r.get("fixture")]
+    index.append({"id": rid, "title": rcfg["title"], "short": rcfg.get("short", rcfg["title"]), "bbox": bbox,
+                  "date": post_time[:10], "lat": round(cy, 3), "lon": round(cx, 3), "event_id": rcfg["event"].get("id", ""),
+                  "link": rcfg["event"].get("source_url", "")})
+    (ROOT_OUT / "regions.json").write_text(json.dumps(index, indent=1))
+
+    # ---------- shared events feed: analysed regions first, then recent EONET events
+    events, seen = [], set()
+    for r in index:
+        events.append({"id": r.get("event_id") or r["id"], "title": r["title"], "category": "floods", "date": r["date"],
+                       "lat": r["lat"], "lon": r["lon"], "source": "TerraWatch", "link": r.get("link", ""),
+                       "analysed": True, "region": r["id"]})
+        seen.add((r.get("event_id") or "").split("#")[0])
+    sl = load_json(config.DATA / "shortlist.json", {})
     pool_ev = [r["event"] for r in sl.get("pairs", []) + sl.get("no_pair", []) if r["event"].get("source") == "EONET"]
     for ev in sorted(pool_ev, key=lambda e: e["date"], reverse=True):
         base = ev["id"].split("#")[0]
@@ -220,9 +256,9 @@ def main():
         seen.add(base)
         events.append({"id": base, "title": ev["title"], "category": ev["category"], "date": ev["date"],
                        "lat": ev["lat"], "lon": ev["lon"], "source": "EONET", "link": ev.get("link", ""), "analysed": False})
-        if len(events) >= 13:
+        if len(events) >= len(index) + 12:
             break
-    (OUT / "events.json").write_text(json.dumps(events, indent=1))
+    (ROOT_OUT / "events.json").write_text(json.dumps(events, indent=1))
 
     # ---------- forecast snapshot
     try:
@@ -235,37 +271,29 @@ def main():
         if load_json(OUT / "forecast.json") is None:
             (OUT / "forecast.json").write_text(json.dumps({"lat": cy, "lon": cx, "rain_48h_mm": 0, "fetched": now, "source": "unavailable"}))
 
-    # ---------- config: keep tuned thresholds, refresh pins unless locked
-    cfg = load_json(OUT / "config.json", {})
+    # ---------- shared config: keep tuned thresholds; default the ESP32 site to this region's far pin
+    cfg = load_json(ROOT_OUT / "config.json", {})
     defaults = {"wetness_percentile_high": 0.8, "water_ratio_high": 1.5, "rain_48h_mm_high": 50, "sensor_rise_high": 150,
                 "sensor_rise_window_s": 20, "sensor_stale_s": 30, "near_km": 5, "far_km": 25, "sim": {"rain_48h_mm": 85},
                 "firebase_url": ""}
     cfg = {**defaults, **cfg}
-    if not cfg.get("pins_locked") and feats:
-        allflood = unary_union([g for _a, n, g in feats if n == "open_water_flood"][:200])
-        inside = feats[0][2].representative_point()
-        corners = [Point(bbox[0] + 0.02, bbox[1] + 0.02), Point(bbox[0] + 0.02, bbox[3] - 0.02),
-                   Point(bbox[2] - 0.02, bbox[1] + 0.02), Point(bbox[2] - 0.02, bbox[3] - 0.02)]
-        far = max(corners, key=lambda p: p.distance(allflood))
-        # "near": walk from the far corner toward the flood until about 10 km away
-        near = far
-        for f in np.linspace(0, 1, 200):
-            p = Point(far.x + (inside.x - far.x) * f, far.y + (inside.y - far.y) * f)
-            if p.distance(allflood) * 111 <= 10:
-                near = p
-                break
-        pin = lambda label, p: {"label": label, "lat": round(p.y, 4), "lon": round(p.x, 4)}  # noqa: E731
-        cfg["demo_pins"] = [pin("Far from flood", far), pin("Near flood", near), pin("Inside flood", inside)]
-        cfg["device_location"] = {"lat": round(far.y, 4), "lon": round(far.x, 4), "label": "Demo sensor site"}
-        print(f"Demo pins set (far corner is ~{far.distance(allflood) * 111:.0f} km from mapped flooding). "
-              f'Set "pins_locked": true in config.json to keep hand-edited pins.')
-    (OUT / "config.json").write_text(json.dumps(cfg, indent=1))
+    cfg.pop("demo_pins", None)
+    dev = cfg.get("device_location")
+    known = any(r["bbox"][0] <= dev["lon"] <= r["bbox"][2] and r["bbox"][1] <= dev["lat"] <= r["bbox"][3] for r in index) if dev else False
+    if pins and not (known and cfg.get("device_locked")):
+        if not known:
+            cfg["device_location"] = {"lat": pins[0]["lat"], "lon": pins[0]["lon"], "label": f"Demo sensor site ({rcfg.get('short', rid)})"}
+    (ROOT_OUT / "config.json").write_text(json.dumps(cfg, indent=1))
+    if not (ROOT_OUT / "briefings.json").exists():
+        (ROOT_OUT / "briefings.json").write_text("{}")
+    if not (OUT / "briefings.json").exists():
+        (OUT / "briefings.json").write_text("{}")
 
     print(f"\nExported to {OUT}: {len(feats)} polygons, {stats['flooded_km2']} km2 flooded, {len(cells)} signal cells, "
           f"{len(events)} events.")
     for n in ["pre.png", "post.png", "flood.png", "flood.geojson", "signals.json"]:
         print(f"  {n}: {(OUT / n).stat().st_size / 1024:.0f} KB")
-    print("briefings.json is NOT updated here: run 06_briefings.py next.")
+    print(f"Next: python pipeline/06_briefings.py --region {rid}")
 
 
 if __name__ == "__main__":

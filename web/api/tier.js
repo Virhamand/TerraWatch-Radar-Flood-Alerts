@@ -1311,6 +1311,10 @@ function pointToPolygonDistance(point2, polygonOrMultiPolygon, options = {}) {
 }
 
 // src/shared/geo.ts
+var inBBox2 = (b, lat, lon) => lon >= b[0] && lon <= b[2] && lat >= b[1] && lat <= b[3];
+function regionAt(regions, lat, lon) {
+  return regions.find((r) => inBBox2(r.bbox, lat, lon)) ?? null;
+}
 function floodDistanceKm(fc, lat, lon, maxKm = 200) {
   if (!fc || !fc.features.length) return null;
   const p = point([lon, lat]);
@@ -1321,6 +1325,16 @@ function floodDistanceKm(fc, lat, lon, maxKm = 200) {
     if (d < best) best = d;
   }
   return best <= maxKm ? Math.max(best, 0.01) : null;
+}
+function nearestFloodKm(regions, lat, lon) {
+  let best = null;
+  for (const r of regions) {
+    const pad = 3;
+    if (lon < r.bbox[0] - pad || lon > r.bbox[2] + pad || lat < r.bbox[1] - pad || lat > r.bbox[3] + pad) continue;
+    const d = floodDistanceKm(r.flood, lat, lon);
+    if (d != null && (best == null || d < best)) best = d;
+  }
+  return best;
 }
 
 // src/shared/tier.ts
@@ -1484,20 +1498,27 @@ var getJson = async (url, ms = 4e3) => {
 async function loadStatic(origin) {
   if (cache && cache.origin === origin && Date.now() - cache.at < 6e4) return cache.data;
   const f = (n) => getJson(`${origin}/data/${n}`);
-  const [config, ground, flood, forecast, meta] = await Promise.all([
+  const [config, index] = await Promise.all([
     f("config.json"),
-    f("signals.json"),
-    f("flood.geojson"),
-    f("forecast.json"),
-    f("meta.json")
+    f("regions.json")
   ]);
-  cache = { at: Date.now(), origin, data: { config, ground, flood, forecast, meta } };
+  const regions = await Promise.all(index.map(async (r) => {
+    const [ground, flood, forecast, meta] = await Promise.all([
+      f(`${r.id}/signals.json`),
+      f(`${r.id}/flood.geojson`),
+      f(`${r.id}/forecast.json`),
+      f(`${r.id}/meta.json`)
+    ]);
+    return { ...r, ground, flood, forecast, meta };
+  }));
+  cache = { at: Date.now(), origin, data: { config, regions } };
   return cache.data;
 }
 async function buildTier(origin, query) {
   const s = await loadStatic(origin);
   const lat = Number(query.get("lat") ?? s.config.device_location.lat);
   const lon = Number(query.get("lon") ?? s.config.device_location.lon);
+  const here = regionAt(s.regions, lat, lon);
   const fb = (s.config.firebase_url ?? "").replace(/\/$/, "");
   const [sensor, demo, rain] = await Promise.all([
     fb ? getJson(`${fb}/sensor/latest.json`, 2500).catch(() => null) : null,
@@ -1505,18 +1526,18 @@ async function buildTier(origin, query) {
     getJson(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&hourly=precipitation&forecast_days=3&timezone=UTC`,
       3e3
-    ).then((d) => ({ mm: sum48h(d.hourly.precipitation), asOf: (/* @__PURE__ */ new Date()).toISOString() })).catch(() => ({ mm: s.forecast.rain_48h_mm, asOf: s.forecast.fetched }))
+    ).then((d) => ({ mm: sum48h(d.hourly.precipitation), asOf: (/* @__PURE__ */ new Date()).toISOString() })).catch(() => here ? { mm: here.forecast.rain_48h_mm, asOf: here.forecast.fetched } : { mm: null, asOf: null })
   ]);
   const now = Date.now();
   const r = computeTier({
     config: s.config,
     lat,
     lon,
-    ground: s.ground,
+    ground: here?.ground ?? null,
     rain48mm: rain.mm,
     rainAsOf: rain.asOf,
     sensor: sensor && typeof sensor.ts === "number" ? sensor : null,
-    floodDistanceKm: floodDistanceKm(s.flood, lat, lon),
+    floodDistanceKm: nearestFloodKm(s.regions, lat, lon),
     sim: { storm: !!demo?.storm, sensor_rise: !!demo?.sensor_rise },
     nowMs: now
   });
@@ -1526,10 +1547,11 @@ async function buildTier(origin, query) {
     title: r.title,
     line: lcdLine(r),
     signals_high: r.signalsHigh,
-    sat_age_d: Math.round((now - Date.parse(s.meta.post.acquired)) / 864e5),
+    sat_age_d: here ? Math.round((now - Date.parse(here.meta.post.acquired)) / 864e5) : -1,
+    region: here?.id ?? null,
     sensor: r.signals[3].simulated ? "sim" : r.signals[3].status === "ok" ? "ok" : "offline",
     simulated: r.simulated,
-    fixture: !!s.meta.fixture,
+    fixture: s.regions.some((x) => x.meta.fixture),
     ts: Math.floor(now / 1e3)
   };
 }

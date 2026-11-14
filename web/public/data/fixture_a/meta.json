@@ -1,10 +1,11 @@
 {
  "fixture": true,
+ "id": "fixture_a",
  "event": {
-  "id": "FIXTURE",
-  "title": "Synthetic placeholder flood (not real data)",
+  "id": "FIXTURE_fixture_a",
+  "title": "Synthetic placeholder flood A (not real data)",
   "country": "n/a",
-  "date": "2026-09-02",
+  "date": "2026-09-05",
   "source_url": ""
  },
  "aoi_bbox": [
@@ -65,5 +66,22 @@
   "date": "2026-09-05",
   "label": "NASA GIBS: MODIS Terra false colour (bands 7-2-1)"
  },
- "generated": "2026-11-14T20:18:45+00:00"
+ "demo_pins": [
+  {
+   "label": "Far from flood",
+   "lat": 13.5,
+   "lon": 104.65
+  },
+  {
+   "label": "Near flood",
+   "lat": 13.08,
+   "lon": 104.22
+  },
+  {
+   "label": "Inside flood",
+   "lat": 12.99,
+   "lon": 104.12
+  }
+ ],
+ "generated": "2026-11-14T22:39:04+00:00"
 }

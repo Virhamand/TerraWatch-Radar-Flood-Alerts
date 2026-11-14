@@ -1,6 +1,8 @@
 """Flood change detection on the co-registered rasters written by 03_fetch.py.
 
-Inputs in pipeline/data/ (all on the SAME grid, any projected or geographic CRS):
+Usage: python pipeline/04_detect.py --region <id>
+
+Inputs in pipeline/data/<id>/ (all on the SAME grid, any projected or geographic CRS):
   pre_<POL>.tif, post_<POL>.tif     gamma-0 backscatter, linear power           (required)
   pre_<WETNESS_POL>.tif, post_...   second polarization                         (optional)
   jrc_occurrence.tif                JRC Global Surface Water occurrence, 0-100  (optional)
@@ -18,11 +20,10 @@ import numpy as np
 import rasterio
 from scipy import ndimage
 from skimage.filters import threshold_otsu
-from skimage.morphology import binary_opening, disk, remove_small_objects
 
 import config
 
-D = config.DATA
+D = config.DATA  # replaced by the region's working folder in main()
 
 
 def read(name):
@@ -48,6 +49,18 @@ def smooth(db, k):
     return out
 
 
+def clean(mask, min_px):
+    """Morphological opening, then drop connected patches smaller than min_px (scipy only)."""
+    m = ndimage.binary_opening(mask, structure=np.ones((3, 3), bool))
+    labels, n = ndimage.label(m)
+    if n == 0:
+        return m
+    sizes = ndimage.sum_labels(m, labels, index=np.arange(1, n + 1))
+    keep = np.zeros(n + 1, bool)
+    keep[1:] = sizes >= min_px
+    return keep[labels]
+
+
 def pixel_size_m(profile):
     t, crs = profile["transform"], profile["crs"]
     if crs and crs.is_geographic:
@@ -58,6 +71,8 @@ def pixel_size_m(profile):
 
 
 def main():
+    global D
+    _rid, _cfg, D, _out = config.region_from_args(__doc__)
     pre_p, prof = read(f"pre_{config.POL}.tif")
     post_p, prof2 = read(f"post_{config.POL}.tif")
     if pre_p is None or post_p is None:
@@ -102,8 +117,7 @@ def main():
 
     # --- cleanup
     min_px = max(4, int(round(config.MIN_PATCH_HA / px_ha)))
-    flood = binary_opening(flood, disk(1))
-    flood = remove_small_objects(flood, min_px)
+    flood = clean(flood, min_px)
 
     # --- possible flooded vegetation: brightness INCREASE under tree cover (L-band double bounce)
     veg = np.zeros_like(flood)
@@ -111,7 +125,7 @@ def main():
     if wc is not None:
         trees = np.isin(wc, [10, 95])  # tree cover, mangroves
         veg = valid & trees & (change > config.VEG_INCREASE_DB) & ~permanent
-        veg = remove_small_objects(binary_opening(veg, disk(1)), min_px * 2)
+        veg = clean(veg, min_px * 2)
     else:
         notes.append("no WorldCover: flooded-vegetation flag and land-cover stats skipped")
 

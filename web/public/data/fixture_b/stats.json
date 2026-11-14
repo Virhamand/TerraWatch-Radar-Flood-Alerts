@@ -1,30 +1,30 @@
 {
- "flooded_km2": 206.3,
+ "flooded_km2": 192.3,
  "flooded_vegetation_km2": 0,
- "aoi_km2": 2998,
+ "aoi_km2": 2800,
  "by_landcover": [
   {
    "class": "Cropland",
    "code": 40,
-   "km2": 119.7,
+   "km2": 111.5,
    "pct": 58
   },
   {
    "class": "Grassland",
    "code": 30,
-   "km2": 45.4,
+   "km2": 42.3,
    "pct": 22
   },
   {
    "class": "Tree cover",
    "code": 10,
-   "km2": 24.8,
+   "km2": 23.1,
    "pct": 12
   },
   {
    "class": "Built-up",
    "code": 50,
-   "km2": 16.5,
+   "km2": 15.4,
    "pct": 8
   }
  ],

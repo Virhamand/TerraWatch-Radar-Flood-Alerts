@@ -2,16 +2,18 @@
 // Bundled into api/tier.js by `npm run build:api` (single self-contained file, committed).
 // Uses the SAME tier engine as the browser. Reads the static pipeline exports from this site,
 // the live sensor reading and demo flags from Firebase, and the rain forecast from Open-Meteo.
-import { floodDistanceKm, type FloodCollection } from '../src/shared/geo'
+import { nearestFloodKm, regionAt, type FloodCollection } from '../src/shared/geo'
 import { computeTier, lcdLine, sum48h, type Config, type GroundSignals, type SensorReading } from '../src/shared/tier'
 
-interface Static {
-  config: Config & { firebase_url?: string }
+interface RegionData {
+  id: string
+  bbox: [number, number, number, number]
   ground: GroundSignals
   flood: FloodCollection
   forecast: { rain_48h_mm: number; fetched: string }
   meta: { post: { acquired: string }; fixture?: boolean }
 }
+interface Static { config: Config & { firebase_url?: string }; regions: RegionData[] }
 let cache: { at: number; origin: string; data: Static } | null = null
 
 const getJson = async <T,>(url: string, ms = 4000): Promise<T> => {
@@ -23,11 +25,17 @@ const getJson = async <T,>(url: string, ms = 4000): Promise<T> => {
 async function loadStatic(origin: string): Promise<Static> {
   if (cache && cache.origin === origin && Date.now() - cache.at < 60_000) return cache.data
   const f = <T,>(n: string) => getJson<T>(`${origin}/data/${n}`)
-  const [config, ground, flood, forecast, meta] = await Promise.all([
-    f<Static['config']>('config.json'), f<GroundSignals>('signals.json'), f<FloodCollection>('flood.geojson'),
-    f<Static['forecast']>('forecast.json'), f<Static['meta']>('meta.json'),
+  const [config, index] = await Promise.all([
+    f<Static['config']>('config.json'), f<{ id: string; bbox: RegionData['bbox'] }[]>('regions.json'),
   ])
-  cache = { at: Date.now(), origin, data: { config, ground, flood, forecast, meta } }
+  const regions = await Promise.all(index.map(async (r): Promise<RegionData> => {
+    const [ground, flood, forecast, meta] = await Promise.all([
+      f<GroundSignals>(`${r.id}/signals.json`), f<FloodCollection>(`${r.id}/flood.geojson`),
+      f<RegionData['forecast']>(`${r.id}/forecast.json`), f<RegionData['meta']>(`${r.id}/meta.json`),
+    ])
+    return { ...r, ground, flood, forecast, meta }
+  }))
+  cache = { at: Date.now(), origin, data: { config, regions } }
   return cache.data
 }
 
@@ -35,6 +43,7 @@ export async function buildTier(origin: string, query: URLSearchParams) {
   const s = await loadStatic(origin)
   const lat = Number(query.get('lat') ?? s.config.device_location.lat)
   const lon = Number(query.get('lon') ?? s.config.device_location.lon)
+  const here = regionAt(s.regions, lat, lon)
   const fb = (s.config.firebase_url ?? '').replace(/\/$/, '')
 
   const [sensor, demo, rain] = await Promise.all([
@@ -43,21 +52,22 @@ export async function buildTier(origin: string, query: URLSearchParams) {
     getJson<{ hourly: { precipitation: number[] } }>(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&hourly=precipitation&forecast_days=3&timezone=UTC`, 3000)
       .then((d) => ({ mm: sum48h(d.hourly.precipitation), asOf: new Date().toISOString() }))
-      .catch(() => ({ mm: s.forecast.rain_48h_mm, asOf: s.forecast.fetched })),
+      .catch(() => (here ? { mm: here.forecast.rain_48h_mm as number | null, asOf: here.forecast.fetched as string | null } : { mm: null, asOf: null })),
   ])
 
   const now = Date.now()
   const r = computeTier({
-    config: s.config, lat, lon, ground: s.ground, rain48mm: rain.mm, rainAsOf: rain.asOf,
+    config: s.config, lat, lon, ground: here?.ground ?? null, rain48mm: rain.mm, rainAsOf: rain.asOf,
     sensor: sensor && typeof sensor.ts === 'number' ? sensor : null,
-    floodDistanceKm: floodDistanceKm(s.flood, lat, lon),
+    floodDistanceKm: nearestFloodKm(s.regions, lat, lon),
     sim: { storm: !!demo?.storm, sensor_rise: !!demo?.sensor_rise }, nowMs: now,
   })
   return {
     tier: r.tier, code: r.code, title: r.title, line: lcdLine(r), signals_high: r.signalsHigh,
-    sat_age_d: Math.round((now - Date.parse(s.meta.post.acquired)) / 86_400_000),
+    sat_age_d: here ? Math.round((now - Date.parse(here.meta.post.acquired)) / 86_400_000) : -1,
+    region: here?.id ?? null,
     sensor: r.signals[3].simulated ? 'sim' : r.signals[3].status === 'ok' ? 'ok' : 'offline',
-    simulated: r.simulated, fixture: !!s.meta.fixture, ts: Math.floor(now / 1000),
+    simulated: r.simulated, fixture: s.regions.some((x) => x.meta.fixture), ts: Math.floor(now / 1000),
   }
 }
 

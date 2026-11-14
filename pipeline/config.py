@@ -38,12 +38,37 @@ LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
 LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
 
 # ---------------------------------------------------------------------------------------------
-# CHOSEN EVENT - fill in after 01_discover.py (Checkpoint A)
+# ANALYSED REGIONS - one entry per flood event. Add an entry, then run for that region:
+#   python pipeline/03_fetch.py --region <id>   (then 04_detect, 05_export, 06_briefings)
+# Working rasters go to pipeline/data/<id>/, exports to web/public/data/<id>/.
 # ---------------------------------------------------------------------------------------------
-EVENT = {"id": "", "title": "", "country": "", "date": "", "source_url": ""}
-AOI_BBOX = None            # [west, south, east, north] in degrees; keep to roughly 40-80 km across
-PRE_GRANULE = ""           # granule names from the shortlist
-POST_GRANULE = ""
+REGIONS = {
+    # "sylhet": {
+    #     "title": "Sylhet monsoon flooding, Bangladesh",   # shown in panels
+    #     "short": "Sylhet",                                # shown on the region switcher
+    #     "event": {"id": "EONET_1234", "title": "Flooding in Bangladesh", "country": "Bangladesh",
+    #               "date": "2026-08-30", "source_url": "https://eonet.gsfc.nasa.gov/..."},
+    #     "aoi_bbox": [91.0, 24.6, 91.6, 25.1],             # west, south, east, north; ~40-80 km across
+    #     "pre_granule": "NISAR_L2_PR_GCOV_...",            # granule names from the shortlist
+    #     "post_granule": "NISAR_L2_PR_GCOV_...",
+    # },
+}
+
+
+def region_from_args(description=""):
+    """Parse --region and return (id, settings dict, working dir, export dir)."""
+    import argparse
+    ap = argparse.ArgumentParser(description=description)
+    ap.add_argument("--region", default=os.getenv("TERRAWATCH_REGION") or next(iter(REGIONS), None),
+                    help=f"region id from config.REGIONS ({', '.join(REGIONS) or 'none defined yet'})")
+    rid = ap.parse_args().region
+    if rid not in REGIONS:
+        raise SystemExit(f"Unknown region {rid!r}. Define it in REGIONS in pipeline/config.py first.")
+    work, out = DATA / rid, PUBLIC / rid
+    work.mkdir(parents=True, exist_ok=True)
+    return rid, REGIONS[rid], work, out
+
+
 POL = "HH"                 # polarization used for change detection
 WETNESS_POL = "HV"         # used for the wetness proxy if present, else POL
 TARGET_RES_M = 30          # working resolution; coarser = faster and less speckle

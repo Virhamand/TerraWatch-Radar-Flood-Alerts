@@ -4,42 +4,45 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 
 ## Done
 - Repo scaffold, `.gitignore`, `.env.example`, CREDITS.md
-- `pipeline/01_discover.py` (EONET + CMR pair search), `pipeline/02_inspect.py` (HDF5 structure dump).
-  Written without network access to NASA hosts: NOT yet run against real data.
-- `web/src/shared/tier.ts` tier engine + 19 passing tests (`npm test` in `web/`)
-- `pipeline/make_fixtures.py`: synthetic placeholder data in `web/public/data/` (app shows a PLACEHOLDER banner)
-- Web app v1 (`web/`): swipe map, flood overlay + opacity, legend, tier card with 5 signals and freshness
-  badges, demo pins, simulate storm / sensor toggles, bell + banner + browser notifications, AI briefing
-  card with audience switch, stats, world feed, How it works, Data & credits. Builds clean; tier walk
-  verified in headless Chromium on fixtures (GREEN -> YELLOW -> RED, ORANGE near flood, RED inside).
-- `web/server/tier.ts` -> bundled to `web/api/tier.js` (`npm run build:api`): the endpoint the ESP32 polls.
-  Called locally against the built site: GREEN / ORANGE / RED for the three demo pins. Not yet run on Vercel.
-- `pipeline/06_briefings.py`: facts JSON per alert level, LLM call, automatic check that every number in a
-  briefing exists in the facts. Dry-run and checker tested; the LLM call itself is untested (host blocked).
+- `pipeline/01_discover.py`: RUN BY USER on Windows; found 3 NISAR GCOV collections (BETA, PROVISIONAL, V1,
+  data from 2025-10) and 213 EONET candidate points. Now parallel with progress output. Shortlist not yet seen.
+- `pipeline/02_inspect.py` (HDF5 structure dump): not yet run.
+- MULTI-REGION layout (decided with user): the app works for any pin on the globe; NISAR flood maps exist only
+  inside analysed regions. `web/public/data/regions.json` indexes regions; each has `data/<id>/` with meta,
+  stats, signals, flood.geojson, briefings, forecast, PNGs. Shared: config.json, events.json, briefings.json
+  (briefings for unanalysed places). Regions are defined in `REGIONS` in `pipeline/config.py`; every pipeline
+  script takes `--region <id>`.
+- Outside analysed regions the app shows "No NISAR flood analysis here yet" plus a live NASA CMR lookup of when
+  NISAR last imaged the point; tier there uses rain + sensor only. User will present this as a known limitation
+  (future work: combine NISAR with other satellites).
+- `pipeline/04_detect.py` + `pipeline/05_export.py`: TESTED on synthetic UTM rasters with a known flood:
+  detected 104.97 km2 vs true 105.0; slope mask removed a false-positive hill; export loads in the app.
+- `pipeline/06_briefings.py --region <id>` / `--global`: facts + number checker tested; LLM call untested.
+- `web/src/shared/tier.ts` tier engine + 19 tests; `web/server/tier.ts` -> `web/api/tier.js` for the ESP32
+  (tested locally, region-aware; not yet on Vercel).
+- Web app: swipe map, region switcher, tier card, demo pins per region, simulate toggles, notifications,
+  briefing/stats/world/how/credits tabs. Restyled per Impeccable guidance (applied by hand).
 - Firmware `firmware/terrawatch_esp32/` + `firmware/serial_bridge.py`: written, NOT compiled or run.
-- UI restyle following the Impeccable design skill's published guidance (applied by hand; its detector could
-  not run here): light paper-toned panel beside the dark map, drawn SVG icons instead of emoji, real
-  switch/tab/pressed states, AA contrast on every tier colour, focus rings, reduced-motion support, phone layout.
-- `pipeline/04_detect.py`, `pipeline/05_export.py`: written, NOT yet run (test on synthetic rasters was interrupted).
+- `pipeline/make_fixtures.py`: two synthetic placeholder regions (removed automatically by the first real export).
 
-## Not verified yet
-- Basemap tiles (CARTO) and the NASA GIBS comparison layer: hosts are blocked in the cloud session,
-  so they have only been coded, never seen rendering. Check on the laptop with `npm run dev`.
-- Live Open-Meteo call and Firebase sensor polling (same reason).
+## Not verified yet (hosts blocked in the cloud session)
+- Basemap tiles (CARTO), NASA GIBS comparison layer, live Open-Meteo, Firebase polling.
+- The CMR coverage lookup from a browser (CORS not confirmed; tested only against a mocked response).
+  If the browser blocks it, proxy it through the Vercel function.
 
 ## Next
-1. User: `git pull`, run `01_discover.py --regions`, paste output; lock event (Checkpoint A)
-2. User: run `02_inspect.py` on one granule, paste output
-3. `03_fetch.py`, `04_detect.py`, `05_export.py` fitted to the real HDF5 layout
-4. Deploy to Vercel (project root directory = `web`), then check `/api/tier` on the public URL
-5. User: compile and wire the firmware (pin table is at the top of the .ino); run `06_briefings.py` after the real export
+1. User: paste full `01_discover.py --regions` output; choose 2-4 regions
+2. User: run `02_inspect.py <granule>`, paste output
+3. Write `03_fetch.py` for the real HDF5 layout (the only missing pipeline step)
+4. User: per region run 03 -> 04 -> 05 -> 06; send screenshots for threshold tuning
+5. User: deploy to Vercel (root directory `web`), create Firebase DB, wire and flash the ESP32
 
 ## Design notes
-- Ground signals 1-2 are a grid of cells in `signals.json` (per location, not one value per AOI), and the
-  grid may cover more of the NISAR frame than the detailed flood map, so a pin can be >25 km from flooding
-  and still have ground data. Needed for a GREEN -> YELLOW demo step.
+- Ground signals 1-2 are per grid cell in `signals.json`. A pin's region is found by `regions.json` bbox.
 - Flooding within 25 km (not inside) is ORANGE, including the 0-5 km band.
 - YELLOW = exactly one ground sign + rain; any other pair is ORANGE; three or more is RED.
+- In a ~40 km region every pin is within 25 km of flooding, so the demo's GREEN -> YELLOW step needs either a
+  larger AOI or a hand-placed far pin; decide once real data exists.
 
 ## Open questions for the user
 - None yet

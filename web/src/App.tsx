@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Icon from './components/Icon'
 import MapView from './components/MapView'
-import { fetchRain48, fetchSensor, fmtDate, loadData, pushDemoFlags, type AppData, type Audience } from './data'
-import { floodDistanceKm } from './shared/geo'
+import { fetchCoverage, fetchRain48, fetchSensor, fmtDate, loadData, pushDemoFlags, type AppData, type Audience, type Coverage, type Region } from './data'
+import { nearestFloodKm, regionAt } from './shared/geo'
 import { ageLabel, computeTier, shouldNotify, TIER_META, type SensorReading, type Tier, type TierResult } from './shared/tier'
 
 type Tab = 'briefing' | 'stats' | 'world' | 'how' | 'credits'
@@ -23,11 +23,19 @@ export default function App() {
 }
 
 function Main({ data }: { data: AppData }) {
-  const { config, meta } = data
-  const pins = config.demo_pins ?? []
-  const [pin, setPin] = useState<{ lat: number; lon: number }>(() => pins[0] ?? { lat: config.device_location.lat, lon: config.device_location.lon })
+  const { config, regions } = data
+  const [pin, setPin] = useState<{ lat: number; lon: number }>(() => regions[0].meta.demo_pins?.[0] ?? { lat: config.device_location.lat, lon: config.device_location.lon })
+  // `here` = the analysed region the pin is in (null outside every region); `shown` = the region on the map
+  const here = useMemo(() => regionAt(regions, pin.lat, pin.lon), [regions, pin.lat, pin.lon])
+  const [shownId, setShownId] = useState(regions[0].id)
+  useEffect(() => { if (here) setShownId(here.id) }, [here])
+  const shown = regions.find((r) => r.id === shownId) ?? regions[0]
+  const meta = shown.meta
+  const pins = shown.meta.demo_pins ?? []
+  const snapshot = (here ?? shown).forecast
+  const [coverage, setCoverage] = useState<Coverage | 'loading' | 'error'>('loading')
   const [sim, setSim] = useState({ storm: false, sensor_rise: false })
-  const [rain, setRain] = useState<{ mm: number; asOf: string; live: boolean }>({ mm: data.forecast.rain_48h_mm, asOf: data.forecast.fetched, live: false })
+  const [rain, setRain] = useState<{ mm: number | null; asOf: string | null; live: boolean }>({ mm: null, asOf: null, live: false })
   const [sensor, setSensor] = useState<SensorReading | null>(null)
   const [now, setNow] = useState(Date.now())
   const [tab, setTab] = useState<Tab>('briefing')
@@ -46,9 +54,22 @@ function Main({ data }: { data: AppData }) {
     let dead = false
     fetchRain48(pin.lat, pin.lon)
       .then((r) => { if (!dead) setRain({ ...r, live: true }) })
-      .catch(() => { if (!dead) setRain({ mm: data.forecast.rain_48h_mm, asOf: data.forecast.fetched, live: false }) })
+      // the saved snapshot only applies inside the region it was taken for
+      .catch(() => { if (!dead) setRain(here ? { mm: snapshot.rain_48h_mm, asOf: snapshot.fetched, live: false } : { mm: null, asOf: null, live: false }) })
     return () => { dead = true }
-  }, [pin.lat, pin.lon, data.forecast])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin.lat, pin.lon])
+
+  // outside analysed regions: ask NASA's catalog whether NISAR has imaged this point at all
+  useEffect(() => {
+    if (here) return
+    let dead = false
+    setCoverage('loading')
+    const t = setTimeout(() => {
+      fetchCoverage(pin.lat, pin.lon).then((c) => { if (!dead) setCoverage(c) }).catch(() => { if (!dead) setCoverage('error') })
+    }, 400)
+    return () => { dead = true; clearTimeout(t) }
+  }, [here, pin.lat, pin.lon])
 
   // ground sensor polling (Firebase)
   useEffect(() => {
@@ -61,11 +82,11 @@ function Main({ data }: { data: AppData }) {
 
   useEffect(() => { if (config.firebase_url) pushDemoFlags(config.firebase_url, sim) }, [sim, config.firebase_url])
 
-  const dist = useMemo(() => floodDistanceKm(data.flood, pin.lat, pin.lon), [data.flood, pin.lat, pin.lon])
+  const dist = useMemo(() => nearestFloodKm(regions, pin.lat, pin.lon), [regions, pin.lat, pin.lon])
   const result: TierResult = useMemo(() => computeTier({
-    config, lat: pin.lat, lon: pin.lon, ground: data.ground, rain48mm: rain.mm, rainAsOf: rain.asOf,
+    config, lat: pin.lat, lon: pin.lon, ground: here?.ground ?? null, rain48mm: rain.mm, rainAsOf: rain.asOf,
     sensor, floodDistanceKm: dist, sim, nowMs: now,
-  }), [config, pin.lat, pin.lon, data.ground, rain, sensor, dist, sim, now])
+  }), [config, pin.lat, pin.lon, here, rain, sensor, dist, sim, now])
 
   // notifications: only when the tier increases, plus one BLUE note per world event at start
   const prevTier = useRef<Tier | null>(null)
@@ -82,7 +103,7 @@ function Main({ data }: { data: AppData }) {
     }
   }
   useEffect(() => {
-    const others = data.events.filter((e) => e.id !== meta.event.id).slice(0, 5)
+    const others = data.events.filter((e) => !e.analysed).slice(0, 5)
     others.forEach((e) => addNote({ tier: 'BLUE', title: 'Global report', body: `${e.title} (${fmtDate(e.date)})` }, false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -97,8 +118,13 @@ function Main({ data }: { data: AppData }) {
   }, [result.tier])
 
   const tm = TIER_META[result.tier]
-  const briefing = data.briefings[result.tier]?.[aud]
-  const satAge = ageLabel(meta.post.acquired, now)
+  const briefing = (here ? here.briefings : data.globalBriefings)[result.tier]?.[aud]
+  const anyFixture = regions.some((r) => r.meta.fixture)
+  const goTo = (r: Region) => {
+    const p = r.meta.demo_pins?.[0] ?? { lat: (r.meta.aoi_bbox[1] + r.meta.aoi_bbox[3]) / 2, lon: (r.meta.aoi_bbox[0] + r.meta.aoi_bbox[2]) / 2 }
+    setPin({ lat: p.lat, lon: p.lon }); setShownId(r.id)
+    setFocus({ lat: (r.meta.aoi_bbox[1] + r.meta.aoi_bbox[3]) / 2, lon: (r.meta.aoi_bbox[0] + r.meta.aoi_bbox[2]) / 2, zoom: 8.6, n: Date.now() })
+  }
   const sensorSig = result.signals[3]
   const world = data.events
 
@@ -134,7 +160,7 @@ function Main({ data }: { data: AppData }) {
           </div>
         )}
 
-        {meta.fixture && <div className="fixture" role="note"><b>Placeholder data.</b> This is a synthetic test scene, not a real NISAR analysis yet.</div>}
+        {anyFixture && <div className="fixture" role="note"><b>Placeholder data.</b> These are synthetic test scenes, not real NISAR analyses yet.</div>}
 
         <section className="tier" data-tier={result.tier} aria-live="polite">
           <div className="tierhead">
@@ -156,15 +182,30 @@ function Main({ data }: { data: AppData }) {
               </li>
             ))}
           </ul>
+          {!here && (
+            <p className="coverage">
+              <b>No NISAR flood analysis here yet.</b>{' '}
+              {coverage === 'loading' ? 'Checking NASA\u2019s catalog for NISAR coverage\u2026'
+                : coverage === 'error' ? 'NISAR coverage lookup is unavailable right now.'
+                : coverage.scenes === 0 || !coverage.latest ? 'NASA\u2019s catalog lists no NISAR scenes over this point.'
+                : `NISAR last imaged this point on ${fmtDate(coverage.latest)} (${coverage.scenes.toLocaleString()} scenes in NASA\u2019s catalog).`}{' '}
+              The alert level here uses the rain forecast and ground sensor only.
+            </p>
+          )}
           <div className="fresh">
-            <span title={meta.post.acquired}><Icon name="satellite" size={14} />Satellite {satAge}</span>
-            <span><Icon name="rain" size={14} />Forecast {sim.storm ? 'simulated' : `${ageLabel(rain.asOf, now)}${rain.live ? '' : ' (saved)'}`}</span>
+            <span title={here?.meta.post.acquired}><Icon name="satellite" size={14} />Satellite {here ? ageLabel(here.meta.post.acquired, now) : typeof coverage === 'object' && coverage.latest ? `last pass ${ageLabel(coverage.latest, now)}` : 'no analysis here'}</span>
+            <span><Icon name="rain" size={14} />Forecast {sim.storm ? 'simulated' : `${rain.asOf ? ageLabel(rain.asOf, now) : 'unavailable'}${rain.live || !rain.asOf ? '' : ' (saved)'}`}</span>
             <span><Icon name="sensor" size={14} />Sensor {sensorSig.simulated ? 'simulated' : sensorSig.status === 'ok' ? ageLabel(sensorSig.asOf, now) : 'offline'}</span>
           </div>
         </section>
 
         <section className="demo">
           <div className="row"><h3>Demo location</h3><small className="num">{pin.lat.toFixed(3)}, {pin.lon.toFixed(3)}</small></div>
+          {regions.length > 1 && (
+            <div className="seg regions" role="group" aria-label="Analysed regions">
+              {regions.map((r) => <button key={r.id} aria-pressed={r.id === shown.id} title={r.title} onClick={() => goTo(r)}>{r.short ?? r.title}</button>)}
+            </div>
+          )}
           <div className="btns">
             {pins.map((p) => (
               <button key={p.label} aria-pressed={p.lat === pin.lat && p.lon === pin.lon}
@@ -204,13 +245,13 @@ function Main({ data }: { data: AppData }) {
               </small>
             </>
           )}
-          {tab === 'stats' && <StatsPanel data={data} />}
+          {tab === 'stats' && <StatsPanel region={shown} />}
           {tab === 'world' && (
             <>
               <h3>Around the world</h3>
               <p className="muted"><i className="chip" style={{ background: TIER_META.BLUE.color }} />Global report: floods and severe storms from NASA EONET, plus areas TerraWatch has analysed with NISAR.</p>
               {world.map((e) => (
-                <button key={e.id} className="event" onClick={() => setFocus({ lat: e.lat, lon: e.lon, zoom: e.analysed ? 9 : 5, n: Date.now() })}>
+                <button key={e.id} className="event" onClick={() => { const r = regions.find((x) => x.id === e.region); if (r) goTo(r); else setFocus({ lat: e.lat, lon: e.lon, zoom: 5, n: Date.now() }) }}>
                   <b>{e.title}</b>
                   <span>{fmtDate(e.date)} · {e.category === 'severeStorms' ? 'Severe storm' : 'Flood'} · {e.source}{e.analysed ? ' · NISAR analysis available' : ''}</span>
                 </button>
@@ -218,7 +259,7 @@ function Main({ data }: { data: AppData }) {
             </>
           )}
           {tab === 'how' && <HowPanel />}
-          {tab === 'credits' && <CreditsPanel data={data} />}
+          {tab === 'credits' && <CreditsPanel region={shown} />}
         </section>
         <footer>TerraWatch supplements, but does not replace, official emergency alerts.<br />Prototype built for NASA Space Apps 2026.</footer>
       </aside>
@@ -230,17 +271,18 @@ function Main({ data }: { data: AppData }) {
             <button onClick={() => setBanner(null)} aria-label="Dismiss alert"><Icon name="close" size={14} /></button>
           </div>
         )}
-        <MapView data={data} pin={pin} onPin={(lat, lon) => setPin({ lat, lon })} tierColor={tm.color} focus={focus} />
+        <MapView regions={regions} active={shown} events={data.events} pin={pin} onPin={(lat, lon) => setPin({ lat, lon })} tierColor={tm.color} focus={focus} />
       </main>
     </div>
   )
 }
 
-function StatsPanel({ data }: { data: AppData }) {
-  const { stats, meta } = data
+function StatsPanel({ region }: { region: Region }) {
+  const { stats, meta } = region
   const max = Math.max(...stats.by_landcover.map((l) => l.km2), 0.001)
   return (
     <>
+      <h3>{region.title}</h3>
       <div className="big"><b>{stats.flooded_km2.toLocaleString()} km²</b><span>newly flooded, of {stats.aoi_km2.toLocaleString()} km² analysed</span></div>
       {stats.flooded_vegetation_km2 > 0 && <p>Plus {stats.flooded_vegetation_km2} km² of possible flooded vegetation.</p>}
       <h3>Flooded area by land cover</h3>
@@ -255,7 +297,7 @@ function StatsPanel({ data }: { data: AppData }) {
       <p className="muted">
         Change in {stats.method.pol} backscatter between {fmtDate(meta.pre.acquired)} and {fmtDate(meta.post.acquired)}; pixels that
         darkened by more than {Math.abs(stats.method.otsu_threshold_db).toFixed(1)} dB (Otsu threshold) are flagged. Permanent water
-        ({stats.method.permanent_water}) and slopes over {stats.method.slope_max_deg}° are removed; patches under {stats.method.min_patch_ha} ha are dropped.
+        ({stats.method.permanent_water}) and {stats.method.slope_max_deg != null ? `slopes over ${stats.method.slope_max_deg}° ` : 'no slope mask; '}are removed; patches under {stats.method.min_patch_ha} ha are dropped.
         Land cover: ESA WorldCover.
       </p>
     </>
@@ -286,11 +328,11 @@ function HowPanel() {
   )
 }
 
-function CreditsPanel({ data }: { data: AppData }) {
-  const { meta } = data
+function CreditsPanel({ region }: { region: Region }) {
+  const { meta } = region
   return (
     <>
-      <h3>NASA data in this view</h3>
+      <h3>NASA data in this view: {region.title}</h3>
       <table>
         <tbody>
           <tr><th>Product</th><td>{meta.collection} (NISAR Level-2 geocoded polarimetric covariance, L-band)</td></tr>
@@ -309,6 +351,7 @@ function CreditsPanel({ data }: { data: AppData }) {
         <li>Copernicus DEM GLO-30: slope mask</li>
         <li>ESA WorldCover 10 m: land cover</li>
         <li>Basemap: © OpenStreetMap contributors © CARTO</li>
+        <li>NASA CMR catalog: live NISAR coverage lookup for any location</li>
         <li>ESP32 water-level sensor: live ground reading</li>
       </ul>
       <p className="muted">Processed {fmtDate(meta.generated)}. Full list of data, libraries, APIs and AI tools: CREDITS.md in the project repository.</p>
