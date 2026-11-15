@@ -86,6 +86,7 @@ def region_from_args(description=""):
     ap = argparse.ArgumentParser(description=description)
     ap.add_argument("--region", default=os.getenv("TERRAWATCH_REGION") or next(iter(REGIONS), None),
                     help=f"region id from config.REGIONS ({', '.join(REGIONS) or 'none defined yet'})")
+    ap.add_argument("--force", action="store_true", help="redo work even if outputs exist")
     rid = ap.parse_args().region
     if rid not in REGIONS:
         raise SystemExit(f"Unknown region {rid!r}. Define it in REGIONS in pipeline/config.py first.")
