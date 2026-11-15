@@ -12,6 +12,30 @@
   "region": "tonle_sap"
  },
  {
+  "id": "EONET_20898",
+  "title": "Flood in Paraguay (EONET)",
+  "category": "floods",
+  "date": "2026-06-30",
+  "lat": -26.4,
+  "lon": -57.151,
+  "source": "TerraWatch",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20898",
+  "analysed": true,
+  "region": "paraguay"
+ },
+ {
+  "id": "EONET_20879",
+  "title": "Flood in Slovakia (EONET)",
+  "category": "floods",
+  "date": "2026-07-02",
+  "lat": 48.275,
+  "lon": 17.728,
+  "source": "TerraWatch",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20879",
+  "analysed": true,
+  "region": "slovakia"
+ },
+ {
   "id": "EONET_26158",
   "title": "Tropical Storm Pena",
   "category": "severeStorms",

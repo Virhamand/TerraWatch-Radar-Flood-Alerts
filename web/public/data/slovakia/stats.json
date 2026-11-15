@@ -1,0 +1,26 @@
+{
+ "flooded_km2": 1.4,
+ "flooded_vegetation_km2": 1.0,
+ "aoi_km2": 2422,
+ "by_landcover": [
+  {
+   "class": "Cropland",
+   "code": 40,
+   "km2": 1.4,
+   "pct": 100
+  }
+ ],
+ "mean_change_db": -4.3,
+ "method": {
+  "pol": "HH",
+  "otsu_threshold_db": -3.0,
+  "threshold_source": "fixed",
+  "min_patch_ha": 1.0,
+  "alert_min_patch_km2": 1.0,
+  "slope_max_deg": 5,
+  "permanent_water": "JRC GSW occurrence >= 80%",
+  "notes": [
+   "Otsu gave -1.27 dB, outside -8.0..-1.5; used fixed -3.0 dB"
+  ]
+ }
+}

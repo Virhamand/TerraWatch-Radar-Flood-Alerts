@@ -14,5 +14,37 @@
   "lon": 104.074,
   "event_id": "tonle_sap_2026",
   "link": ""
+ },
+ {
+  "id": "paraguay",
+  "title": "Flood in Paraguay (EONET)",
+  "short": "Paraguay",
+  "bbox": [
+   -57.45196,
+   -26.65049,
+   -56.84966,
+   -26.14934
+  ],
+  "date": "2026-06-30",
+  "lat": -26.4,
+  "lon": -57.151,
+  "event_id": "EONET_20898",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20898"
+ },
+ {
+  "id": "slovakia",
+  "title": "Flood in Slovakia (EONET)",
+  "short": "Slovakia",
+  "bbox": [
+   17.37894,
+   48.03462,
+   18.07685,
+   48.51531
+  ],
+  "date": "2026-07-02",
+  "lat": 48.275,
+  "lon": 17.728,
+  "event_id": "EONET_20879",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20879"
  }
 ]
