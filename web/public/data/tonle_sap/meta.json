@@ -1,0 +1,103 @@
+{
+ "id": "tonle_sap",
+ "event": {
+  "id": "tonle_sap_2026",
+  "title": "Tonle Sap monsoon flood pulse",
+  "country": "Cambodia",
+  "date": "2026-10-17",
+  "source_url": ""
+ },
+ "aoi_bbox": [
+  103.74753,
+  12.69794,
+  104.35111,
+  13.20231
+ ],
+ "pre": {
+  "granule": "NISAR_L2_PR_GCOV_023_083_A_008_2005_DHDH_M_20260619T223637_20260619T223711_P05023_N_F_J_001",
+  "acquired": "2026-06-19T22:36:37Z",
+  "track": 83,
+  "frame": 8,
+  "direction": "Ascending",
+  "pols": [
+   "HH",
+   "HV"
+  ],
+  "epsg": 32648,
+  "spacing_m": 20.0,
+  "product_version": "1.0.11",
+  "doi": "10.5067/NIL2GCOV-P1",
+  "url": "https://nisar.asf.earthdatacloud.nasa.gov/NISAR/NISAR_L2_GCOV_PROVISIONAL_V1/NISAR_L2_PR_GCOV_023_083_A_008_2005_DHDH_M_20260619T223637_20260619T223711_P05023_N_F_J_001/NISAR_L2_PR_GCOV_023_083_A_008_2005_DHDH_M_20260619T223637_20260619T223711_P05023_N_F_J_001.h5"
+ },
+ "post": {
+  "granule": "NISAR_L2_PR_GCOV_033_083_A_008_2005_DHDH_M_20261017T223633_20261017T223708_P05023_N_F_J_001",
+  "acquired": "2026-10-17T22:36:33Z",
+  "track": 83,
+  "frame": 8,
+  "direction": "Ascending",
+  "pols": [
+   "HH",
+   "HV"
+  ],
+  "epsg": 32648,
+  "spacing_m": 20.0,
+  "product_version": "1.0.11",
+  "doi": "10.5067/NIL2GCOV-P1",
+  "url": "https://nisar.asf.earthdatacloud.nasa.gov/NISAR/NISAR_L2_GCOV_PROVISIONAL_V1/NISAR_L2_PR_GCOV_033_083_A_008_2005_DHDH_M_20261017T223633_20261017T223708_P05023_N_F_J_001/NISAR_L2_PR_GCOV_033_083_A_008_2005_DHDH_M_20261017T223633_20261017T223708_P05023_N_F_J_001.h5"
+ },
+ "collection": "NISAR_L2_GCOV_PROVISIONAL_V1",
+ "provider": "ASF DAAC",
+ "images": {
+  "pre": "pre.png",
+  "post": "post.png",
+  "flood": "flood.png",
+  "compare": null,
+  "bounds": [
+   [
+    103.74753,
+    13.20231
+   ],
+   [
+    104.35111,
+    13.20231
+   ],
+   [
+    104.35111,
+    12.69794
+   ],
+   [
+    103.74753,
+    12.69794
+   ]
+  ]
+ },
+ "compare": {
+  "kind": "gibs",
+  "layer": "MODIS_Terra_CorrectedReflectance_Bands721",
+  "date": "2026-10-17",
+  "label": "NASA GIBS: MODIS Terra false colour (bands 7-2-1; water appears dark blue/black)"
+ },
+ "display_stretch_db": [
+  -24.6,
+  -4.0
+ ],
+ "generated": "2026-11-15T00:41:37+00:00",
+ "demo_pins": [
+  {
+   "label": "Far from flood",
+   "lat": 13.1823,
+   "lon": 103.7675
+  },
+  {
+   "label": "Near flood",
+   "lat": 13.1427,
+   "lon": 103.8934
+  },
+  {
+   "label": "Inside flood",
+   "lat": 13.0109,
+   "lon": 104.312
+  }
+ ],
+ "pins_locked": false
+}

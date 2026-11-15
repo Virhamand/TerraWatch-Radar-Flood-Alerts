@@ -1,0 +1,47 @@
+{
+ "flooded_km2": 632.7,
+ "flooded_vegetation_km2": 19.7,
+ "aoi_km2": 3627,
+ "by_landcover": [
+  {
+   "class": "Herbaceous wetland",
+   "code": 90,
+   "km2": 372.3,
+   "pct": 59
+  },
+  {
+   "class": "Cropland",
+   "code": 40,
+   "km2": 176.6,
+   "pct": 28
+  },
+  {
+   "class": "Tree cover",
+   "code": 10,
+   "km2": 64.3,
+   "pct": 10
+  },
+  {
+   "class": "Grassland",
+   "code": 30,
+   "km2": 11.5,
+   "pct": 2
+  },
+  {
+   "class": "Permanent water",
+   "code": 80,
+   "km2": 6.9,
+   "pct": 1
+  }
+ ],
+ "mean_change_db": -8.9,
+ "method": {
+  "pol": "HH",
+  "otsu_threshold_db": -5.24,
+  "threshold_source": "otsu",
+  "min_patch_ha": 1.0,
+  "slope_max_deg": 5,
+  "permanent_water": "JRC GSW occurrence >= 80%",
+  "notes": []
+ }
+}
