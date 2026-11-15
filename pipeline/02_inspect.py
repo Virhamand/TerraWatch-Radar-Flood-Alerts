@@ -30,18 +30,46 @@ def open_h5(target):
         if not urls:
             sys.exit(f"No download URL found in CMR for {target}")
         url = urls[0]
-    print("URL:", url)
+    print("URL:", url, flush=True)
+    import os
     import earthaccess
-    earthaccess.login()  # env vars or ~/.netrc
+    # Never fall back to an interactive prompt: with output redirected it would hang invisibly.
+    if os.getenv("EARTHDATA_USERNAME") and os.getenv("EARTHDATA_PASSWORD"):
+        print(f"Logging in to Earthdata as {os.getenv('EARTHDATA_USERNAME')} (from .env)...", flush=True)
+        auth = earthaccess.login(strategy="environment")
+    else:
+        print("EARTHDATA_USERNAME / EARTHDATA_PASSWORD not found in .env; trying ~/.netrc...", flush=True)
+        auth = earthaccess.login(strategy="netrc")
+    if not getattr(auth, "authenticated", False):
+        sys.exit("Earthdata login FAILED. Check that the file is named exactly .env (not .env.txt), sits in the repo "
+                 "root, and holds EARTHDATA_USERNAME=... and EARTHDATA_PASSWORD=... with no quotes or spaces.")
+    print("Login ok. Opening the remote file (first read can take a minute)...", flush=True)
     fs = earthaccess.get_fsspec_https_session()
-    f = fs.open(url, mode="rb", block_size=4 * 1024 * 1024)
-    return h5py.File(f, "r")
+    f = fs.open(url, mode="rb", block_size=8 * 1024 * 1024, cache_type="blockcache")
+    h = h5py.File(f, "r")
+    print("File open.", flush=True)
+    return h
 
 
-def show(name, obj, depth_limit=7):
+def walk(group, path="", depth=0, depth_limit=6):
+    """Manual walk (cheaper than visititems over HTTP): metadata-heavy groups are listed, not expanded."""
+    for key in group:
+        name = f"{path}/{key}" if path else key
+        obj = group.get(key)
+        if obj is None:
+            continue
+        show(name, obj)
+        if isinstance(obj, h5py.Group):
+            heavy = key in ("metadata", "calibrationInformation", "processingInformation", "orbit", "attitude",
+                            "sourceData", "ceosAnalysisReadyData", "radarGrid", "geolocationGrid")
+            if heavy or depth + 1 >= depth_limit:
+                print("  " * (depth + 2) + "children: " + ", ".join(list(obj.keys())[:40]), flush=True)
+            else:
+                walk(obj, name, depth + 1, depth_limit)
+
+
+def show(name, obj):
     depth = name.count("/")
-    if depth > depth_limit:
-        return
     pad = "  " * depth
     if isinstance(obj, h5py.Dataset):
         extra = ""
@@ -54,19 +82,19 @@ def show(name, obj, depth_limit=7):
             except Exception as e:  # noqa: BLE001
                 extra = f" (unreadable: {e})"
         print(f"{pad}{name.split('/')[-1]}  shape={obj.shape} dtype={obj.dtype} chunks={obj.chunks} "
-              f"comp={obj.compression}{extra}")
+              f"comp={obj.compression}{extra}", flush=True)
     else:
-        print(f"{pad}{name.split('/')[-1]}/")
+        print(f"{pad}{name.split('/')[-1]}/", flush=True)
 
 
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     h = open_h5(sys.argv[1])
-    print("\n===== TREE =====")
-    h.visititems(show)
+    print("\n===== TREE =====", flush=True)
+    walk(h)
 
-    print("\n===== GRID SUMMARY =====")
+    print("\n===== GRID SUMMARY =====", flush=True)
 
     def find_grids(name, obj):
         if isinstance(obj, h5py.Group) and "xCoordinates" in obj and "yCoordinates" in obj:
@@ -91,8 +119,16 @@ def main():
                              for a, v in d.attrs.items() if a in ("units", "_FillValue", "long_name", "description")}
                     print(f"  {k}: {d.shape} {d.dtype} {stats} {attrs}")
 
-    h.visititems(find_grids)
-    print("\nDone.")
+    def find(group, path="", depth=0):
+        for key in group:
+            obj = group.get(key)
+            if isinstance(obj, h5py.Group) and key not in ("metadata", "radarGrid", "geolocationGrid") and depth < 6:
+                name = f"{path}/{key}" if path else key
+                find_grids(name, obj)
+                find(obj, name, depth + 1)
+
+    find(h)
+    print("\nDone.", flush=True)
 
 
 if __name__ == "__main__":
