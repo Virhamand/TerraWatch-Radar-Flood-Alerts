@@ -35,7 +35,9 @@ Resume point for any new session. Full plan: see "Plan summary" below.
   494.3 km2 flooded, Otsu -5.3 dB. Alert polygons = patches >= 1 km2 (42 polygons); the overlay PNG shows all.
   Demo walk verified on it: far pin GREEN -> storm YELLOW -> +sensor RED; near pin ORANGE; inside RED.
   The pin/polygon rule was applied to the exported files by hand in the cloud session; 05_export.py now does the same.
-- costa_rica, paraguay, slovakia: defined in config, not yet processed.
+- costa_rica: processed, only 0.2 km2 detected (Otsu failed, fixed threshold) -> DROPPED from app and config.
+- niger_delta (seasonal, pre 2026-06-24, post 2026-10-10, track 145A frame 009): added to config, not yet processed.
+- paraguay, slovakia (EONET): defined, not yet processed; same risk as Costa Rica.
 - Briefings: none yet (user has no Groq key in .env yet).
 - User's laptop: Windows, PowerShell, works on local `main`, pushes with `git push origin HEAD:claude/terrawatch-planning-ftxj87`. Node.js not installed yet.
 

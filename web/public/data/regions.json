@@ -14,21 +14,5 @@
   "lon": 104.074,
   "event_id": "tonle_sap_2026",
   "link": ""
- },
- {
-  "id": "costa_rica",
-  "title": "Flood in Costa Rica (EONET)",
-  "short": "Costa Rica",
-  "bbox": [
-   -83.8043,
-   9.84566,
-   -83.19651,
-   10.35469
-  ],
-  "date": "2026-07-01",
-  "lat": 10.1,
-  "lon": -83.5,
-  "event_id": "EONET_20981",
-  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20981"
  }
 ]
