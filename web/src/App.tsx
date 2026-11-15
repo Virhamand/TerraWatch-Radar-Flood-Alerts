@@ -350,7 +350,7 @@ function CreditsPanel({ region }: { region: Region }) {
         <li>JRC Global Surface Water: permanent-water baseline</li>
         <li>Copernicus DEM GLO-30: slope mask</li>
         <li>ESA WorldCover 10 m: land cover</li>
-        <li>Basemap: © OpenStreetMap contributors © CARTO</li>
+        <li>Basemap: OpenFreeMap © OpenMapTiles, data © OpenStreetMap contributors</li>
         <li>NASA CMR catalog: live NISAR coverage lookup for any location</li>
         <li>ESP32 water-level sensor: live ground reading</li>
       </ul>

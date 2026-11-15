@@ -46,7 +46,7 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - Firebase Realtime Database (test mode): https://terrawatch-44097-default-rtdb.firebaseio.com  set in config.json.
 
 ## Not verified yet (hosts blocked in the cloud session)
-- Basemap tiles (CARTO), NASA GIBS comparison layer, live Open-Meteo, Firebase polling.
+- Basemap tiles (OpenFreeMap), NASA GIBS comparison layer, live Open-Meteo, Firebase polling.
 - The CMR coverage lookup from a browser (CORS not confirmed; tested only against a mocked response).
   If the browser blocks it, proxy it through the Vercel function.
 

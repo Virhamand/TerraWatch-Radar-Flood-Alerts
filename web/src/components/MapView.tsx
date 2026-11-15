@@ -1,23 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import maplibregl, { type GeoJSONSource, type ImageSource, type Map as MlMap, type RasterTileSource, type StyleSpecification } from 'maplibre-gl'
+import maplibregl, { type GeoJSONSource, type ImageSource, type Map as MlMap, type RasterTileSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { fmtDate, regionFile, type Region, type WorldEvent } from '../data'
 import Icon from './Icon'
 
-const BASE: StyleSpecification = {
-  version: 8,
-  sources: {
-    base: {
-      type: 'raster', tileSize: 256,
-      tiles: ['a', 'b', 'c', 'd'].map((s) => `https://${s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png`),
-      attribution: '© OpenStreetMap contributors © CARTO',
-    },
-  },
-  layers: [
-    { id: 'bg', type: 'background', paint: { 'background-color': '#10161b' } },
-    { id: 'base', type: 'raster', source: 'base' },
-  ],
-}
+// Keyless vector basemap. CARTO's raster tiles now watermark "API KEY REQUIRED" on deployed origins.
+const BASE = 'https://tiles.openfreemap.org/styles/dark'
 
 const gibsTiles = (layer: string, date: string) =>
   `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${layer}/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`
