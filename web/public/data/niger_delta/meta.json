@@ -84,7 +84,7 @@
  "generated": "2026-11-15T05:59:35+00:00",
  "demo_pins": [
   {
-   "label": "Far from flood",
+   "label": "Farthest from flood",
    "lat": 15.275,
    "lon": -4.625
   },

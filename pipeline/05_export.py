@@ -227,7 +227,8 @@ def main():
             far_c = max(beyond, key=lambda c: (c["wetness"] >= 0.8, c["wetness"])) if beyond else max(land, key=km)
             far, near = ctr(far_c), ctr(min(land, key=lambda c: abs(km(c) - 10)))
         pin = lambda label, p: {"label": label, "lat": round(p.y, 4), "lon": round(p.x, 4)}  # noqa: E731
-        pins = [pin("Far from flood", far), pin("Near flood", near), pin("Inside flood", inside)]
+        far_label = "Far from flood" if far.distance(allflood) * 108 >= 25 else "Farthest from flood"  # may still be within warning range
+        pins = [pin(far_label, far), pin("Near flood", near), pin("Inside flood", inside)]
         print(f"Demo pins set: far pin ~{far.distance(allflood) * 108:.0f} km and near pin ~{near.distance(allflood) * 108:.0f} km from mapped flooding. "
               f'Add "pins_locked": true to {rid}/meta.json to keep hand-edited pins.')
     meta["demo_pins"] = pins or []

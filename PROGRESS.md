@@ -36,10 +36,10 @@ Resume point for any new session. Full plan: see "Plan summary" below.
   Demo walk verified on it: far pin GREEN -> storm YELLOW -> +sensor RED; near pin ORANGE; inside RED.
   The pin/polygon rule was applied to the exported files by hand in the cloud session; 05_export.py now does the same.
 - costa_rica: processed, only 0.2 km2 detected (Otsu failed, fixed threshold) -> DROPPED from app and config.
-- niger_delta (seasonal, pre 2026-06-24, post 2026-10-10, track 145A frame 009): added to config, not yet processed.
+- niger_delta: REAL export in repo, KEPT: 748.1 km2, Otsu -3.72 dB, 100 alert polygons. No point in the box is >25 km from flooding, so its far pin reads ORANGE (labelled 'Farthest from flood'). Use Tonle Sap for the GREEN -> RED walk.
 - paraguay (EONET_20898): REAL export in repo, KEPT: 53.4 km2, Otsu -4.6 dB, 8 alert polygons; walk far GREEN / near ORANGE / inside RED verified. The NISAR swath edge crosses the box (east part has no data).
 - slovakia (EONET_20879): processed, 1.4 km2, Otsu failed -> DROPPED.
-- Vercel: user says the site is deployed (URL not yet shared; /api/tier on Vercel not yet confirmed).
+- Vercel: https://terra-watch-radar-flood-alerts.vercel.app  /api/tier CONFIRMED working there. Production builds from `main` (user merges PRs from the claude branch); claude-branch pushes only make Preview deployments.
 - Briefings: none yet (user has no Groq key in .env yet).
 - User's laptop: Windows, PowerShell, works on local `main`, pushes with `git push origin HEAD:claude/terrawatch-planning-ftxj87`. Node.js not installed yet.
 
