@@ -36,6 +36,7 @@
   "min_patch_ha": 1.0,
   "slope_max_deg": 5,
   "permanent_water": "JRC GSW occurrence >= 80%",
-  "notes": []
+  "notes": [],
+  "alert_min_patch_km2": 1.0
  }
 }

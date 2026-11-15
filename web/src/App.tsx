@@ -297,7 +297,7 @@ function StatsPanel({ region }: { region: Region }) {
       <p className="muted">
         Change in {stats.method.pol} backscatter between {fmtDate(meta.pre.acquired)} and {fmtDate(meta.post.acquired)}; pixels that
         darkened by more than {Math.abs(stats.method.otsu_threshold_db).toFixed(1)} dB (Otsu threshold) are flagged. Permanent water
-        ({stats.method.permanent_water}) and {stats.method.slope_max_deg != null ? `slopes over ${stats.method.slope_max_deg}° ` : 'no slope mask; '}are removed; patches under {stats.method.min_patch_ha} ha are dropped.
+        ({stats.method.permanent_water}) and {stats.method.slope_max_deg != null ? `slopes over ${stats.method.slope_max_deg}° ` : 'no slope mask; '}are removed; patches under {stats.method.min_patch_ha} ha are dropped.{stats.method.alert_min_patch_km2 ? ` Alerts use flooded patches of at least ${stats.method.alert_min_patch_km2} km²; smaller ones are shown on the map only.` : ''}
         Land cover: ESA WorldCover.
       </p>
     </>

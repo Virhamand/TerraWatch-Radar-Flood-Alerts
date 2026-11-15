@@ -12,8 +12,8 @@
  },
  "firebase_url": "",
  "device_location": {
-  "lat": 13.1823,
-  "lon": 103.7675,
+  "lat": 13.525,
+  "lon": 104.125,
   "label": "Demo sensor site (Tonle Sap)"
  }
 }

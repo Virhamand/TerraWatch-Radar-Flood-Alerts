@@ -107,5 +107,6 @@ WATER_CEILING_DB = -15.0       # post-event pixel must also be this dark to coun
 JRC_PERMANENT_PCT = 80         # JRC occurrence >= this is permanent water
 SLOPE_MAX_DEG = 5
 MIN_PATCH_HA = 1.0
+ALERT_MIN_PATCH_KM2 = 1.0       # only flooded patches this large become alert polygons (small ones stay on the map image)
 VEG_INCREASE_DB = 3.0          # HH increase flagged as possible flooded vegetation in tree cover
 SIGNAL_CELL_DEG = 0.05

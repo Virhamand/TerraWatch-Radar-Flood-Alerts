@@ -30,6 +30,15 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - Firmware `firmware/terrawatch_esp32/` + `firmware/serial_bridge.py`: written, NOT compiled or run.
 - `pipeline/make_fixtures.py`: two synthetic placeholder regions (removed automatically by the first real export).
 
+## Real data status
+- tonle_sap: REAL NISAR export in the repo (pre 2026-06-19, post 2026-10-17, AOI north shore + Siem Reap).
+  494.3 km2 flooded, Otsu -5.3 dB. Alert polygons = patches >= 1 km2 (42 polygons); the overlay PNG shows all.
+  Demo walk verified on it: far pin GREEN -> storm YELLOW -> +sensor RED; near pin ORANGE; inside RED.
+  The pin/polygon rule was applied to the exported files by hand in the cloud session; 05_export.py now does the same.
+- costa_rica, paraguay, slovakia: defined in config, not yet processed.
+- Briefings: none yet (user has no Groq key in .env yet).
+- User's laptop: Windows, PowerShell, works on local `main`, pushes with `git push origin HEAD:claude/terrawatch-planning-ftxj87`. Node.js not installed yet.
+
 ## Not verified yet (hosts blocked in the cloud session)
 - Basemap tiles (CARTO), NASA GIBS comparison layer, live Open-Meteo, Firebase polling.
 - The CMR coverage lookup from a browser (CORS not confirmed; tested only against a mocked response).

@@ -85,8 +85,8 @@
  "demo_pins": [
   {
    "label": "Far from flood",
-   "lat": 13.575,
-   "lon": 104.225
+   "lat": 13.525,
+   "lon": 104.125
   },
   {
    "label": "Near flood",
