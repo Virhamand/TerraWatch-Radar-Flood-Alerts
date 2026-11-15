@@ -114,7 +114,7 @@ def main():
             if g.is_empty:
                 continue
             a = km2_of(g)
-            if a * 100 >= config.MIN_PATCH_HA:
+            if a >= config.ALERT_MIN_PATCH_KM2:  # alert polygons: sizeable patches only
                 feats.append((a, name, g))
     feats.sort(key=lambda f: -f[0])
     feats = feats[:500]
@@ -140,7 +140,7 @@ def main():
         "aoi_km2": round(det["valid_km2"]), "by_landcover": by_lc,
         "mean_change_db": round(float(np.nanmean(change[flood])), 1) if flood.any() else None,
         "method": {"pol": det["pol"], "otsu_threshold_db": det["threshold_db"], "threshold_source": det["threshold_source"],
-                   "min_patch_ha": det["min_patch_ha"], "slope_max_deg": det["slope_max_deg"],
+                   "min_patch_ha": det["min_patch_ha"], "alert_min_patch_km2": config.ALERT_MIN_PATCH_KM2, "slope_max_deg": det["slope_max_deg"],
                    "permanent_water": (f"JRC GSW occurrence >= {det['jrc_permanent_pct']}%" if det["jrc_permanent_pct"] else "not removed"),
                    "notes": det["notes"]},
     }
@@ -210,20 +210,25 @@ def main():
     # ---------- demo pins for this region
     pins = old_meta.get("demo_pins") if old_meta.get("pins_locked") else None
     if not pins and feats:
-        allflood = unary_union([g for _a, n, g in feats if n == "open_water_flood"][:200] or [feats[0][2]])
+        allflood = unary_union([g for _a, n, g in feats if n == "open_water_flood"] or [feats[0][2]])
         inside = feats[0][2].representative_point()
-        corners = [Point(bbox[0] + 0.02, bbox[1] + 0.02), Point(bbox[0] + 0.02, bbox[3] - 0.02),
-                   Point(bbox[2] - 0.02, bbox[1] + 0.02), Point(bbox[2] - 0.02, bbox[3] - 0.02)]
-        far = max(corners, key=lambda p: p.distance(allflood))
-        near = far  # walk from the far corner toward the flood until about 10 km away
-        for f in np.linspace(0, 1, 200):
-            p = Point(far.x + (inside.x - far.x) * f, far.y + (inside.y - far.y) * f)
-            if p.distance(allflood) * 111 <= 10:
-                near = p
-                break
+        # candidate pin sites: centres of signal cells that are mostly dry land with a wetness value
+        cell_km2 = (step * 111.32 * np.cos(np.radians(lat_mid))) * (step * 110.57)
+        ctr = lambda c: Point((c["bbox"][0] + c["bbox"][2]) / 2, (c["bbox"][1] + c["bbox"][3]) / 2)  # noqa: E731
+        land = [c for c in cells if c["wetness"] is not None and c["water_km2"] < 0.05 * cell_km2
+                and bbox[0] < ctr(c).x < bbox[2] and bbox[1] < ctr(c).y < bbox[3]]
+        km = lambda c: ctr(c).distance(allflood) * 108  # noqa: E731  (approximate km)
+        if not land:
+            far = near = Point(bbox[0] + 0.02, bbox[1] + 0.02)
+        else:
+            # far pin: beyond the 25 km warning radius and, if possible, on wet ground, so the demo can
+            # walk GREEN -> YELLOW (wet ground + storm) -> RED (+ sensor)
+            beyond = [c for c in land if km(c) >= 28]
+            far_c = max(beyond, key=lambda c: (c["wetness"] >= 0.8, c["wetness"])) if beyond else max(land, key=km)
+            far, near = ctr(far_c), ctr(min(land, key=lambda c: abs(km(c) - 10)))
         pin = lambda label, p: {"label": label, "lat": round(p.y, 4), "lon": round(p.x, 4)}  # noqa: E731
         pins = [pin("Far from flood", far), pin("Near flood", near), pin("Inside flood", inside)]
-        print(f"Demo pins set; the far corner is ~{far.distance(allflood) * 111:.0f} km from mapped flooding. "
+        print(f"Demo pins set: far pin ~{far.distance(allflood) * 108:.0f} km and near pin ~{near.distance(allflood) * 108:.0f} km from mapped flooding. "
               f'Add "pins_locked": true to {rid}/meta.json to keep hand-edited pins.')
     meta["demo_pins"] = pins or []
     meta["pins_locked"] = bool(old_meta.get("pins_locked"))

@@ -6,7 +6,12 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - Repo scaffold, `.gitignore`, `.env.example`, CREDITS.md
 - `pipeline/01_discover.py`: RUN BY USER on Windows; found 3 NISAR GCOV collections (BETA, PROVISIONAL, V1,
   data from 2025-10) and 213 EONET candidate points. Now parallel with progress output. Shortlist not yet seen.
-- `pipeline/02_inspect.py` (HDF5 structure dump): not yet run.
+- `pipeline/02_inspect.py`: RUN BY USER on the Tonle Sap post granule. Real layout confirmed:
+  `/science/LSAR/GCOV/grids/frequencyA/{HHHH,HVHV,mask,xCoordinates,yCoordinates,projection}`, 20 m UTM,
+  float32 linear gamma-0, 512 px gzip chunks, mask 255 = outside swath; frequencyB is 80 m.
+- `pipeline/03_fetch.py`: windowed remote read of pre/post + 2x2 multilook to 40 m + JRC / Copernicus DEM /
+  WorldCover warped to the same grid. TESTED on mock granules in the real layout (775 km2 detected vs 779 true)
+  with the REAL ancillary tiles (those hosts are reachable from the cloud session). Not yet run on real NISAR.
 - MULTI-REGION layout (decided with user): the app works for any pin on the globe; NISAR flood maps exist only
   inside analysed regions. `web/public/data/regions.json` indexes regions; each has `data/<id>/` with meta,
   stats, signals, flood.geojson, briefings, forecast, PNGs. Shared: config.json, events.json, briefings.json
@@ -25,15 +30,23 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - Firmware `firmware/terrawatch_esp32/` + `firmware/serial_bridge.py`: written, NOT compiled or run.
 - `pipeline/make_fixtures.py`: two synthetic placeholder regions (removed automatically by the first real export).
 
+## Real data status
+- tonle_sap: REAL NISAR export in the repo (pre 2026-06-19, post 2026-10-17, AOI north shore + Siem Reap).
+  494.3 km2 flooded, Otsu -5.3 dB. Alert polygons = patches >= 1 km2 (42 polygons); the overlay PNG shows all.
+  Demo walk verified on it: far pin GREEN -> storm YELLOW -> +sensor RED; near pin ORANGE; inside RED.
+  The pin/polygon rule was applied to the exported files by hand in the cloud session; 05_export.py now does the same.
+- costa_rica, paraguay, slovakia: defined in config, not yet processed.
+- Briefings: none yet (user has no Groq key in .env yet).
+- User's laptop: Windows, PowerShell, works on local `main`, pushes with `git push origin HEAD:claude/terrawatch-planning-ftxj87`. Node.js not installed yet.
+
 ## Not verified yet (hosts blocked in the cloud session)
 - Basemap tiles (CARTO), NASA GIBS comparison layer, live Open-Meteo, Firebase polling.
 - The CMR coverage lookup from a browser (CORS not confirmed; tested only against a mocked response).
   If the browser blocks it, proxy it through the Vercel function.
 
 ## Next
-2. User: run `02_inspect.py <granule>`, paste output
-3. Write `03_fetch.py` for the real HDF5 layout (the only missing pipeline step)
-4. User: per region run 03 -> 04 -> 05 -> 06; send screenshots for threshold tuning
+2. User: `03_fetch.py --region tonle_sap`, then 04 -> 05 -> 06; send output + screenshots for threshold tuning
+3. Repeat for costa_rica, paraguay, slovakia
 5. User: deploy to Vercel (root directory `web`), create Firebase DB, wire and flash the ESP32
 
 ## Design notes

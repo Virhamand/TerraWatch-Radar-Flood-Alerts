@@ -49,7 +49,7 @@ REGIONS = {
         "title": "Tonle Sap seasonal flood, Cambodia", "short": "Tonle Sap",
         "event": {"id": "tonle_sap_2026", "title": "Tonle Sap monsoon flood pulse", "country": "Cambodia",
                   "date": "2026-10-17", "source_url": ""},   # seasonal inundation, not an EONET event
-        "aoi_bbox": [103.75, 12.70, 104.35, 13.20],
+        "aoi_bbox": [103.70, 12.95, 104.45, 13.55],   # north shore + Siem Reap + dry land to the north
         "pre_granule": "NISAR_L2_PR_GCOV_023_083_A_008_2005_DHDH_M_20260619T223637_20260619T223711_P05023_N_F_J_001",
         "post_granule": "NISAR_L2_PR_GCOV_033_083_A_008_2005_DHDH_M_20261017T223633_20261017T223708_P05023_N_F_J_001",
     },
@@ -86,6 +86,7 @@ def region_from_args(description=""):
     ap = argparse.ArgumentParser(description=description)
     ap.add_argument("--region", default=os.getenv("TERRAWATCH_REGION") or next(iter(REGIONS), None),
                     help=f"region id from config.REGIONS ({', '.join(REGIONS) or 'none defined yet'})")
+    ap.add_argument("--force", action="store_true", help="redo work even if outputs exist")
     rid = ap.parse_args().region
     if rid not in REGIONS:
         raise SystemExit(f"Unknown region {rid!r}. Define it in REGIONS in pipeline/config.py first.")
@@ -106,5 +107,6 @@ WATER_CEILING_DB = -15.0       # post-event pixel must also be this dark to coun
 JRC_PERMANENT_PCT = 80         # JRC occurrence >= this is permanent water
 SLOPE_MAX_DEG = 5
 MIN_PATCH_HA = 1.0
+ALERT_MIN_PATCH_KM2 = 1.0       # only flooded patches this large become alert polygons (small ones stay on the map image)
 VEG_INCREASE_DB = 3.0          # HH increase flagged as possible flooded vegetation in tree cover
 SIGNAL_CELL_DEG = 0.05

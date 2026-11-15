@@ -1,32 +1,18 @@
 [
  {
-  "id": "fixture_a",
-  "title": "Synthetic placeholder flood A (not real data)",
-  "short": "Test scene A",
+  "id": "tonle_sap",
+  "title": "Tonle Sap seasonal flood, Cambodia",
+  "short": "Tonle Sap",
   "bbox": [
-   103.8,
-   12.7,
-   104.8,
-   13.6
+   103.69674,
+   12.9476,
+   104.45152,
+   13.55284
   ],
-  "date": "2026-09-05",
-  "lat": 12.95,
-  "lon": 104.05,
-  "fixture": true
- },
- {
-  "id": "fixture_b",
-  "title": "Synthetic placeholder flood B (not real data)",
-  "short": "Test scene B",
-  "bbox": [
-   91.0,
-   24.5,
-   92.0,
-   25.4
-  ],
-  "date": "2026-10-12",
-  "lat": 24.75,
-  "lon": 91.25,
-  "fixture": true
+  "date": "2026-10-17",
+  "lat": 13.25,
+  "lon": 104.074,
+  "event_id": "tonle_sap_2026",
+  "link": ""
  }
 ]

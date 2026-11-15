@@ -23,7 +23,7 @@ export interface Stats {
   flooded_vegetation_km2: number
   aoi_km2: number
   by_landcover: { class: string; code: number; km2: number; pct: number }[]
-  method: { pol: string; otsu_threshold_db: number; min_patch_ha: number; slope_max_deg: number | null; permanent_water: string }
+  method: { pol: string; otsu_threshold_db: number; min_patch_ha: number; alert_min_patch_km2?: number; slope_max_deg: number | null; permanent_water: string }
 }
 export interface WorldEvent {
   id: string; title: string; category: string; date: string; lat: number; lon: number
