@@ -53,13 +53,15 @@ REGIONS = {
         "pre_granule": "NISAR_L2_PR_GCOV_023_083_A_008_2005_DHDH_M_20260619T223637_20260619T223711_P05023_N_F_J_001",
         "post_granule": "NISAR_L2_PR_GCOV_033_083_A_008_2005_DHDH_M_20261017T223633_20261017T223708_P05023_N_F_J_001",
     },
-    "costa_rica": {
-        "title": "Flood in Costa Rica (EONET)", "short": "Costa Rica",
-        "event": {"id": "EONET_20981", "title": "Flood in Costa Rica 1104003", "country": "Costa Rica",
-                  "date": "2026-07-01", "source_url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20981"},
-        "aoi_bbox": [-83.80, 9.85, -83.20, 10.35],
-        "pre_granule": "NISAR_L2_PR_GCOV_023_069_D_083_4005_DHDH_A_20260619T000051_20260619T000126_P05023_N_F_J_001",
-        "post_granule": "NISAR_L2_PR_GCOV_024_069_D_083_4005_DHDH_A_20260701T000051_20260701T000125_P05023_N_F_J_001",
+    # costa_rica (EONET_20981) was processed on 2026-11-14 and dropped: NISAR showed only 0.2 km2 of change
+    # at the EONET point (forested terrain; the event location is approximate). Kept out of the app.
+    "niger_delta": {
+        "title": "Inner Niger Delta seasonal flood, Mali", "short": "Niger Delta",
+        "event": {"id": "niger_delta_2026", "title": "Inner Niger Delta annual flood", "country": "Mali",
+                  "date": "2026-10-10", "source_url": ""},   # seasonal inundation, not an EONET event
+        "aoi_bbox": [-4.65, 14.75, -3.95, 15.35],
+        "pre_granule": "NISAR_L2_PR_GCOV_023_145_A_009_2005_DHDH_A_20260624T055000_20260624T055035_P05023_N_F_J_001",
+        "post_granule": "NISAR_L2_PR_GCOV_032_145_A_009_2005_DHDH_A_20261010T054957_20261010T055031_P05023_N_F_J_001",
     },
     "paraguay": {
         "title": "Flood in Paraguay (EONET)", "short": "Paraguay",
