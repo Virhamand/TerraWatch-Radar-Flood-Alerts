@@ -43,6 +43,8 @@ Resume point for any new session. Full plan: see "Plan summary" below.
 - Briefings: none yet (user has no Groq key in .env yet).
 - User's laptop: Windows, PowerShell, works on local `main`, pushes with `git push origin HEAD:claude/terrawatch-planning-ftxj87`. Node.js not installed yet.
 
+- Firebase Realtime Database (test mode): https://terrawatch-44097-default-rtdb.firebaseio.com  set in config.json.
+
 ## Not verified yet (hosts blocked in the cloud session)
 - Basemap tiles (CARTO), NASA GIBS comparison layer, live Open-Meteo, Firebase polling.
 - The CMR coverage lookup from a browser (CORS not confirmed; tested only against a mocked response).

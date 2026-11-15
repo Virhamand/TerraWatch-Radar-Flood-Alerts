@@ -10,7 +10,7 @@
  "sim": {
   "rain_48h_mm": 85
  },
- "firebase_url": "",
+ "firebase_url": "https://terrawatch-44097-default-rtdb.firebaseio.com",
  "device_location": {
   "lat": 13.525,
   "lon": 104.125,
