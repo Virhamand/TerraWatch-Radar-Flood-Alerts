@@ -1,5 +1,8 @@
 # Progress log
 
+Full project context for a new session: see `context.md`. Docs written 2026-11-15: README, CREDITS (final),
+`docs/project_page.md`, `docs/demo_script.md`. Remaining: user-side live checks, Groq briefings, hardware, merge to main.
+
 Resume point for any new session. Full plan: see "Plan summary" below.
 
 ## Done
