@@ -1,28 +1,20 @@
 /*
   TerraWatch ESP32 node  (NASA Space Apps 2026)
 
-  OUTPUT: polls <site>/api/tier and shows the alert level on an RGB LED, an LCD1602 and a buzzer
-          (buzzer on RED only).
+  OUTPUT: polls <site>/api/tier and shows the alert level on an RGB LED.
   INPUT:  reads the analog water-level sensor, computes how fast the level is rising and PUTs
           {level, rate, ts} to Firebase. That reading is TerraWatch signal 4 ("ground sensor rising").
 
-  NOTE: written without hardware access - not yet compiled or run. Bring up in this order and
-  check the Serial Monitor (115200) at each step: LED -> buzzer -> Wi-Fi -> LCD -> sensor.
+  Bring up in this order and check the Serial Monitor (115200): RGB LED -> Wi-Fi -> water sensor.
 
   Board: "ESP32 Dev Module" (Arduino core for ESP32 2.0.x or 3.x)
-  Libraries (Library Manager): ArduinoJson (v7), LiquidCrystal (Arduino built-in library)
+  Library (Library Manager): ArduinoJson (v7)
 
   WIRING (ESP32 logic is 3.3 V)
     RGB LED (common cathode: longest leg -> GND)   R -> 220R -> GPIO25
                                                    G -> 220R -> GPIO26
                                                    B -> 220R -> GPIO27
-    Active buzzer        + -> GPIO33, - -> GND
     Water level sensor   + -> 3V3, - -> GND, S -> GPIO34   (power from 3V3, NOT 5 V)
-    LCD1602 (parallel)   VSS -> GND, VDD -> 5V (VIN), V0 -> middle pin of 10K pot (ends: 5V, GND)
-                         RS -> GPIO22, RW -> GND (important), E -> GPIO21
-                         D4 -> GPIO19, D5 -> GPIO18, D6 -> GPIO17, D7 -> GPIO16
-                         A -> 220R -> 5V, K -> GND
-  If the LCD shows nothing, turn the pot: the contrast is almost always the problem.
 
   Copy secrets.example.h to secrets.h and fill it in (secrets.h is gitignored).
   If Wi-Fi is unusable, run firmware/serial_bridge.py on the laptop: the sketch always prints
@@ -32,16 +24,13 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include <LiquidCrystal.h>
 #include <time.h>
 #include "secrets.h"
 
 // ---------- pins ----------
 const int PIN_R = 25, PIN_G = 26, PIN_B = 27;
-const int PIN_BUZZ = 33;
 const int PIN_WATER = 34;              // ADC1 only: ADC2 pins do not work while Wi-Fi is on
 const bool COMMON_ANODE = false;       // set true if the LED's long leg goes to 3V3
-LiquidCrystal lcd(22, 21, 19, 18, 17, 16);
 
 // ---------- timing ----------
 const unsigned long CYCLE_MS = 2500;   // sensor post + tier fetch
@@ -53,8 +42,7 @@ Sample hist[HIST];
 int histN = 0, histI = 0;
 
 int tierCode = -1;                     // -1 = unknown / offline
-String tierName = "----", tierLine = "starting...";
-int satAgeD = -1;
+String tierName = "----";
 unsigned long lastCycle = 0, lastTierOk = 0;
 String serialBuf;
 
@@ -71,13 +59,6 @@ void showTier() {
     case 3: setColor(255, 0, 0); break;      // RED
     default: setColor(0, 0, 255); break;     // blue = no data
   }
-  char top[17];
-  if (satAgeD >= 0) snprintf(top, sizeof(top), "%-7s sat %dd", tierName.c_str(), satAgeD);
-  else snprintf(top, sizeof(top), "%-16s", tierName.c_str());
-  lcd.setCursor(0, 0); lcd.print(top);
-  for (int i = strlen(top); i < 16; i++) lcd.print(' ');
-  lcd.setCursor(0, 1); lcd.print(tierLine.substring(0, 16));
-  for (int i = tierLine.length(); i < 16; i++) lcd.print(' ');
 }
 
 bool applyTierJson(const String &body) {
@@ -86,10 +67,9 @@ bool applyTierJson(const String &body) {
   if (doc["code"].isNull()) return false;
   tierCode = doc["code"].as<int>();
   tierName = doc["tier"] | "?";
-  tierLine = doc["line"] | "";
-  satAgeD = doc["sat_age_d"] | -1;
   lastTierOk = millis();
   showTier();
+  Serial.print("Alert tier: "); Serial.println(tierName);
   return true;
 }
 
@@ -140,7 +120,6 @@ bool httpsGet(const String &url, String &out) {
 void connectWifi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-  lcd.setCursor(0, 1); lcd.print("WiFi connecting ");
   unsigned long t0 = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - t0 < 15000) {
     setColor(0, 0, (millis() / 300) % 2 ? 255 : 0);
@@ -156,22 +135,15 @@ void connectWifi() {
 
 void setup() {
   Serial.begin(115200);
-  pinMode(PIN_BUZZ, OUTPUT); digitalWrite(PIN_BUZZ, LOW);
   pinMode(PIN_R, OUTPUT); pinMode(PIN_G, OUTPUT); pinMode(PIN_B, OUTPUT);
   analogReadResolution(12);
-  lcd.begin(16, 2);
-  lcd.print("TerraWatch");
-  // self-test: red, green, blue, beep
+  // LED self-test: red, green, blue
   setColor(255, 0, 0); delay(300); setColor(0, 255, 0); delay(300); setColor(0, 0, 255); delay(300);
-  digitalWrite(PIN_BUZZ, HIGH); delay(80); digitalWrite(PIN_BUZZ, LOW);
   connectWifi();
   showTier();
 }
 
 void loop() {
-  // buzzer: short beeps while RED
-  digitalWrite(PIN_BUZZ, (tierCode == 3 && (millis() % 600) < 150) ? HIGH : LOW);
-
   // serial bridge input: "TIER {json}"
   while (Serial.available()) {
     char c = Serial.read();
@@ -205,7 +177,7 @@ void loop() {
 
   // no tier for 20 s -> show offline (blue)
   if (millis() - lastTierOk > 20000 && tierCode != -1) {
-    tierCode = -1; tierName = "OFFLINE"; tierLine = "no tier data"; satAgeD = -1;
+    tierCode = -1; tierName = "OFFLINE";
     showTier();
   }
 }
