@@ -24,6 +24,18 @@
   "region": "paraguay"
  },
  {
+  "id": "niger_delta_2026",
+  "title": "Inner Niger Delta seasonal flood, Mali",
+  "category": "floods",
+  "date": "2026-10-10",
+  "lat": 15.05,
+  "lon": -4.301,
+  "source": "TerraWatch",
+  "link": "",
+  "analysed": true,
+  "region": "niger_delta"
+ },
+ {
   "id": "EONET_26158",
   "title": "Tropical Storm Pena",
   "category": "severeStorms",

@@ -30,5 +30,21 @@
   "lon": -57.151,
   "event_id": "EONET_20898",
   "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20898"
+ },
+ {
+  "id": "niger_delta",
+  "title": "Inner Niger Delta seasonal flood, Mali",
+  "short": "Niger Delta",
+  "bbox": [
+   -4.65469,
+   14.7464,
+   -3.9475,
+   15.35414
+  ],
+  "date": "2026-10-10",
+  "lat": 15.05,
+  "lon": -4.301,
+  "event_id": "niger_delta_2026",
+  "link": ""
  }
 ]
