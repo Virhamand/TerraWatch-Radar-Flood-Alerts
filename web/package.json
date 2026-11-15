@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:api && tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "build:api": "esbuild server/tier.ts --bundle --platform=node --format=esm --target=node20 --outfile=api/tier.js"
+    "build:api": "esbuild server/tier.ts --bundle --platform=node --format=esm --target=node20 --outfile=api/tier.js",
+    "build:all": "npm run build:api && npm run build"
   },
   "dependencies": {
     "@turf/turf": "^7.4.0",
