@@ -212,18 +212,17 @@ def main():
     if not pins and feats:
         allflood = unary_union([g for _a, n, g in feats if n == "open_water_flood"][:200] or [feats[0][2]])
         inside = feats[0][2].representative_point()
-        corners = [Point(bbox[0] + 0.02, bbox[1] + 0.02), Point(bbox[0] + 0.02, bbox[3] - 0.02),
-                   Point(bbox[2] - 0.02, bbox[1] + 0.02), Point(bbox[2] - 0.02, bbox[3] - 0.02)]
-        far = max(corners, key=lambda p: p.distance(allflood))
-        near = far  # walk from the far corner toward the flood until about 10 km away
-        for f in np.linspace(0, 1, 200):
-            p = Point(far.x + (inside.x - far.x) * f, far.y + (inside.y - far.y) * f)
-            if p.distance(allflood) * 111 <= 10:
-                near = p
-                break
+        # candidate pin sites: centres of signal cells that are mostly dry land with a wetness value
+        cell_km2 = (step * 111.32 * np.cos(np.radians(lat_mid))) * (step * 110.57)
+        land = [Point((c["bbox"][0] + c["bbox"][2]) / 2, (c["bbox"][1] + c["bbox"][3]) / 2) for c in cells
+                if c["wetness"] is not None and c["water_km2"] < 0.05 * cell_km2]
+        if not land:
+            land = [Point(bbox[0] + 0.02, bbox[1] + 0.02), Point(bbox[2] - 0.02, bbox[3] - 0.02)]
+        far = max(land, key=lambda p: p.distance(allflood))
+        near = min(land, key=lambda p: abs(p.distance(allflood) * 111 - 10))  # about 10 km from flooding
         pin = lambda label, p: {"label": label, "lat": round(p.y, 4), "lon": round(p.x, 4)}  # noqa: E731
         pins = [pin("Far from flood", far), pin("Near flood", near), pin("Inside flood", inside)]
-        print(f"Demo pins set; the far corner is ~{far.distance(allflood) * 111:.0f} km from mapped flooding. "
+        print(f"Demo pins set: far pin ~{far.distance(allflood) * 111:.0f} km and near pin ~{near.distance(allflood) * 111:.0f} km from mapped flooding. "
               f'Add "pins_locked": true to {rid}/meta.json to keep hand-edited pins.')
     meta["demo_pins"] = pins or []
     meta["pins_locked"] = bool(old_meta.get("pins_locked"))

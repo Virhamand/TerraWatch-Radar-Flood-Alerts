@@ -49,7 +49,7 @@ REGIONS = {
         "title": "Tonle Sap seasonal flood, Cambodia", "short": "Tonle Sap",
         "event": {"id": "tonle_sap_2026", "title": "Tonle Sap monsoon flood pulse", "country": "Cambodia",
                   "date": "2026-10-17", "source_url": ""},   # seasonal inundation, not an EONET event
-        "aoi_bbox": [103.75, 12.70, 104.35, 13.20],
+        "aoi_bbox": [103.70, 12.95, 104.45, 13.55],   # north shore + Siem Reap + dry land to the north
         "pre_granule": "NISAR_L2_PR_GCOV_023_083_A_008_2005_DHDH_M_20260619T223637_20260619T223711_P05023_N_F_J_001",
         "post_granule": "NISAR_L2_PR_GCOV_033_083_A_008_2005_DHDH_M_20261017T223633_20261017T223708_P05023_N_F_J_001",
     },
