@@ -71,14 +71,7 @@ REGIONS = {
         "pre_granule": "NISAR_L2_PR_GCOV_023_060_A_164_2005_DHDH_A_20260618T094759_20260618T094834_P05023_N_F_J_001",
         "post_granule": "NISAR_L2_PR_GCOV_024_060_A_164_2005_DHDH_A_20260630T094759_20260630T094833_P05023_N_F_J_001",
     },
-    "slovakia": {
-        "title": "Flood in Slovakia (EONET)", "short": "Slovakia",
-        "event": {"id": "EONET_20879", "title": "Flood in Slovakia 1103998", "country": "Slovakia",
-                  "date": "2026-06-30", "source_url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20879"},
-        "aoi_bbox": [17.40, 48.05, 18.05, 48.50],
-        "pre_granule": "NISAR_L2_PR_GCOV_023_086_A_026_2005_DHDH_A_20260620T034623_20260620T034658_P05023_N_F_J_001",
-        "post_granule": "NISAR_L2_PR_GCOV_024_086_A_026_2005_DHDH_A_20260702T034622_20260702T034657_P05023_N_F_J_001",
-    },
+    # slovakia (EONET_20879) was processed on 2026-11-14 and dropped: only 1.4 km2 detected, Otsu failed.
 }
 
 

@@ -37,7 +37,9 @@ Resume point for any new session. Full plan: see "Plan summary" below.
   The pin/polygon rule was applied to the exported files by hand in the cloud session; 05_export.py now does the same.
 - costa_rica: processed, only 0.2 km2 detected (Otsu failed, fixed threshold) -> DROPPED from app and config.
 - niger_delta (seasonal, pre 2026-06-24, post 2026-10-10, track 145A frame 009): added to config, not yet processed.
-- paraguay, slovakia (EONET): defined, not yet processed; same risk as Costa Rica.
+- paraguay (EONET_20898): REAL export in repo, KEPT: 53.4 km2, Otsu -4.6 dB, 8 alert polygons; walk far GREEN / near ORANGE / inside RED verified. The NISAR swath edge crosses the box (east part has no data).
+- slovakia (EONET_20879): processed, 1.4 km2, Otsu failed -> DROPPED.
+- Vercel: user says the site is deployed (URL not yet shared; /api/tier on Vercel not yet confirmed).
 - Briefings: none yet (user has no Groq key in .env yet).
 - User's laptop: Windows, PowerShell, works on local `main`, pushes with `git push origin HEAD:claude/terrawatch-planning-ftxj87`. Node.js not installed yet.
 

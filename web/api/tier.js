@@ -1352,6 +1352,10 @@ function findCell(ground, lat, lon) {
 function sum48h(hourlyMm) {
   return Math.round(hourlyMm.slice(0, 48).reduce((a, b) => a + (b || 0), 0) * 10) / 10;
 }
+var ordinal = (n) => {
+  const t = n % 100;
+  return `${n}${t >= 11 && t <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+};
 function computeSignals(inp) {
   const { config: c } = inp;
   const cell = findCell(inp.ground, inp.lat, inp.lon);
@@ -1369,7 +1373,7 @@ function computeSignals(inp) {
   if (cell && cell.wetness != null) {
     wet.status = "ok";
     wet.high = cell.wetness >= c.wetness_percentile_high;
-    wet.value = `${Math.round(cell.wetness * 100)}th percentile (high at \u2265 ${Math.round(c.wetness_percentile_high * 100)}th)`;
+    wet.value = `${ordinal(Math.round(cell.wetness * 100))} percentile (high at \u2265 ${ordinal(Math.round(c.wetness_percentile_high * 100))})`;
   }
   const water = {
     id: "water",
@@ -1384,7 +1388,8 @@ function computeSignals(inp) {
   if (cell && cell.water_ratio != null) {
     water.status = "ok";
     water.high = cell.water_ratio >= c.water_ratio_high;
-    water.value = `${cell.water_ratio.toFixed(1)}\xD7 normal extent (high at \u2265 ${c.water_ratio_high}\xD7)`;
+    const r = cell.water_ratio;
+    water.value = (r >= 99 ? "Over 99\xD7 normal extent" : r < 1 ? "At or below normal extent" : `${r.toFixed(1)}\xD7 normal extent`) + ` (high at \u2265 ${c.water_ratio_high}\xD7)`;
   }
   const rainMm = inp.sim.storm ? c.sim.rain_48h_mm : inp.rain48mm;
   const rain = {

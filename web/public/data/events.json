@@ -24,18 +24,6 @@
   "region": "paraguay"
  },
  {
-  "id": "EONET_20879",
-  "title": "Flood in Slovakia (EONET)",
-  "category": "floods",
-  "date": "2026-07-02",
-  "lat": 48.275,
-  "lon": 17.728,
-  "source": "TerraWatch",
-  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20879",
-  "analysed": true,
-  "region": "slovakia"
- },
- {
   "id": "EONET_26158",
   "title": "Tropical Storm Pena",
   "category": "severeStorms",
