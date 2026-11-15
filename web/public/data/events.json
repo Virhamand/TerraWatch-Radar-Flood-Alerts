@@ -12,6 +12,18 @@
   "region": "tonle_sap"
  },
  {
+  "id": "EONET_20981",
+  "title": "Flood in Costa Rica (EONET)",
+  "category": "floods",
+  "date": "2026-07-01",
+  "lat": 10.1,
+  "lon": -83.5,
+  "source": "TerraWatch",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20981",
+  "analysed": true,
+  "region": "costa_rica"
+ },
+ {
   "id": "EONET_26158",
   "title": "Tropical Storm Pena",
   "category": "severeStorms",
