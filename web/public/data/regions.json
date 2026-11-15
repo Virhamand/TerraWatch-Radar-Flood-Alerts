@@ -4,14 +4,14 @@
   "title": "Tonle Sap seasonal flood, Cambodia",
   "short": "Tonle Sap",
   "bbox": [
-   103.74753,
-   12.69794,
-   104.35111,
-   13.20231
+   103.69674,
+   12.9476,
+   104.45152,
+   13.55284
   ],
   "date": "2026-10-17",
-  "lat": 12.95,
-  "lon": 104.049,
+  "lat": 13.25,
+  "lon": 104.074,
   "event_id": "tonle_sap_2026",
   "link": ""
  }

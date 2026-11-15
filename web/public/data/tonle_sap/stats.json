@@ -1,43 +1,37 @@
 {
- "flooded_km2": 632.7,
- "flooded_vegetation_km2": 19.7,
- "aoi_km2": 3627,
+ "flooded_km2": 494.3,
+ "flooded_vegetation_km2": 25.0,
+ "aoi_km2": 5432,
  "by_landcover": [
-  {
-   "class": "Herbaceous wetland",
-   "code": 90,
-   "km2": 372.3,
-   "pct": 59
-  },
   {
    "class": "Cropland",
    "code": 40,
-   "km2": 176.6,
-   "pct": 28
+   "km2": 239.6,
+   "pct": 48
+  },
+  {
+   "class": "Herbaceous wetland",
+   "code": 90,
+   "km2": 200.4,
+   "pct": 41
   },
   {
    "class": "Tree cover",
    "code": 10,
-   "km2": 64.3,
-   "pct": 10
+   "km2": 37.3,
+   "pct": 8
   },
   {
    "class": "Grassland",
    "code": 30,
-   "km2": 11.5,
-   "pct": 2
-  },
-  {
-   "class": "Permanent water",
-   "code": 80,
-   "km2": 6.9,
-   "pct": 1
+   "km2": 13.3,
+   "pct": 3
   }
  ],
- "mean_change_db": -8.9,
+ "mean_change_db": -8.8,
  "method": {
   "pol": "HH",
-  "otsu_threshold_db": -5.24,
+  "otsu_threshold_db": -5.3,
   "threshold_source": "otsu",
   "min_patch_ha": 1.0,
   "slope_max_deg": 5,
